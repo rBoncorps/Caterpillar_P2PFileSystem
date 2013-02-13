@@ -88,20 +88,32 @@ int main(int argc, char **argv)
 
 	printf("message envoye au serveur. \n");
 
-	while((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0)
+	if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0)
 	{
 		printf("reponse du serveur : \n");
 		Trame* revert = (Trame*)&buffer;
 		if(revert->typeTrame == ACK_CON) {
 			printf("Recu aquittement de connexion.\n");
 		}
-		//write(1,buffer,longueur);
-		//break;
+	}
+	
+	// main loop for the client
+	char* action = malloc(100*sizeof(char));
+	while(strcmp(action,"exit") != 0) {
+		printf("Enter a command or type help\n");
+		fgets(action,100,stdin);
+		if ((strlen(action)>0) && (action[strlen (action) - 1] == '\n')) {
+        	action[strlen (action) - 1] = '\0';
+        }
+		char* actionName = malloc(100*sizeof(char));
+		char* parameter = malloc(100*sizeof(char));
+		sscanf(action,"%s %s",actionName, parameter);
+		if(strcmp(actionName,"add_friend") == 0) {
+			printf("want to add %s as a friend\n",parameter);
+		}
 	}
 
 	printf("\nfin de la reception. \n");
-
-	sleep(10);
 	close(socket_descriptor);
 
 	printf("connexion avec le serveur fermee, fin du programme. \n");	

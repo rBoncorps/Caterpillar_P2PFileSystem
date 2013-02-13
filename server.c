@@ -31,6 +31,7 @@ void* receptionTrame(void* sock){
 		printf("ouch\n");
 		return;
 	}	
+	sleep(5);
 	buffer[longueur] = '\0';
 	Trame* revert;
 	revert = (Trame*)&buffer;
