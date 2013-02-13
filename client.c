@@ -110,6 +110,8 @@ int main(int argc, char **argv)
 		sscanf(action,"%s %s",actionName, parameter);
 		if(strcmp(actionName,"add_friend") == 0) {
 			printf("want to add %s as a friend\n",parameter);
+			// create a DEM_AMI for the server wich would response a INFO_AMI (to define)
+			// or an ERR trame if it doesn't know the friend
 		}
 	}
 
