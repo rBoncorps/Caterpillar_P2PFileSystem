@@ -27,3 +27,16 @@ int extractNameIP(char* from, char** p_name, char** p_ip) {
 	*p_ip = ip;
 	return 0;
 }
+
+int extractAskedFriendName(char* from,int dataSize, char** p_name) {
+	char* name;
+	name = malloc((dataSize+1)*sizeof(char));
+	int i = 0;
+	while (i < dataSize+1) {
+		name[i] = from[i];
+		i++;
+	}
+	name[dataSize+1] = '\0';
+	*p_name = name;
+	return 0;
+}

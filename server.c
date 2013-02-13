@@ -19,43 +19,60 @@ typedef struct servent servent;
 Matrice* mapIP;
 
 void* receptionTrame(void* sock){
-
-	printf("trame recue\n");
+	int exitLoop = 0;
 	int* tmp = (int*)sock;
 	int nouveau_socket_descriptor = *tmp;
 	int longueur;
 	
-	char buffer[TAILLE_MAX_TRAME];
-	
-	if((longueur=read(nouveau_socket_descriptor,buffer,sizeof(buffer)))<=0) {
-		printf("ouch\n");
-		return;
-	}	
-	sleep(5);
-	buffer[longueur] = '\0';
-	Trame* revert;
-	revert = (Trame*)&buffer;
-	if(revert->typeTrame == CON_SERV) {
-		printf("Received a CON_SERV trame type\n");
-		printf("Datas : %s\n",revert->data);
-		char* name;
-		char* ip;
-		if(extractNameIP(revert->data,&name,&ip) < 0) {
-			printf("Error during name & ip extraction\n");
+	while(!exitLoop) {
+		char buffer[TAILLE_MAX_TRAME];
+		if((longueur=read(nouveau_socket_descriptor,buffer,sizeof(buffer)))<=0) {
+			printf("ouch\n");
 			return;
+		}	
+		printf("trame recue\n");
+		sleep(5);
+		buffer[longueur] = '\0';
+		Trame* revert;
+		revert = (Trame*)&buffer;
+		if(revert->typeTrame == CON_SERV) {
+			printf("Received a CON_SERV trame type\n");
+			printf("Datas : %s\n",revert->data);
+			char* name;
+			char* ip;
+			if(extractNameIP(revert->data,&name,&ip) < 0) {
+				printf("Error during name & ip extraction\n");
+				return;
+			}
+			printf("extracted infos - name : %s, ip : %s\n",name, ip);
+			ajouterClient(mapIP,name,ip);
+			printf("\n -- Contenu mapIP -- \n");
+			afficherMap(mapIP);
+			printf(" --			--\n");
+			Trame* ackTrame = creationTrame(ACK_CON,0,"");
+			if(write(nouveau_socket_descriptor,(char*)ackTrame,256) < 0) {
+				perror("Erreur : impossible d'envoyer l'aquittement de connexion.\n");
+				return;
+			}
 		}
-		printf("extracted infos - name : %s, ip : %s\n",name, ip);
-		ajouterClient(mapIP,name,ip);
-		printf("\n -- Contenu mapIP -- \n");
-		afficherMap(mapIP);
-		printf(" --			--\n");
-		Trame* ackTrame = creationTrame(ACK_CON,0,"");
-		if(write(nouveau_socket_descriptor,(char*)ackTrame,256) < 0) {
-			perror("Erreur : impossible d'envoyer l'aquittement de connexion.\n");
-			return;
+		if(revert->typeTrame == DEM_AMI) {
+			printf("Received a DEM_AMI trame type\n");	
+			printf("Datas : %s\n",revert->data);
+			char* name;
+			if(extractAskedFriendName(revert->data,revert->taille,&name) < 0) {
+				printf("Error during asked friend name extraction\n");
+				return;
+			}
+			printf("extracted infos - name : %s\n",name);
+			/* TODO
+			 *	Verifier que $name est connecté
+			 * 	Envoi requete demande d'ami a $name de la part de client du socket
+			 * 	Attente reponse
+			 * 	si OK -> envoi IP de $name pour ajout a la mapAmi du client
+			 *  sinon -> envoi trame refus
+			*/
 		}
 	}
-
 }
 
 int main(){
