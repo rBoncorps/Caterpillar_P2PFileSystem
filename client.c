@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 {
 	
 	char* name = "jean paul le poulpe";
-	char* ip = "127.0.0.45";
+	char* ip = "127.0.0.48";
 	int socket_descriptor,longueur;
 	sockaddr_in adresse_locale;
 	hostent *ptr_host;
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 
 	if((connect(socket_descriptor, (sockaddr*)(&adresse_locale), sizeof(adresse_locale))) < 0)
 	{
-		perror("erreur : impossilbe de se connecter au serveur.");
+		perror("erreur : impossible de se connecter au serveur.");
 		exit(1);
 	}
 
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 
 	printf("Authentification... \n");
 
-	if((write(socket_descriptor, (char*)trame, strlen((char*)trame)))<0)
+	if((write(socket_descriptor, (char*)trame, 256))<0)
 	{
 		perror("erreur : impossible d'ecrire le message destine au serveur.");
 		exit(1);
@@ -91,8 +91,12 @@ int main(int argc, char **argv)
 	while((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0)
 	{
 		printf("reponse du serveur : \n");
-		write(1,buffer,longueur);
-		break;
+		Trame* revert = (Trame*)&buffer;
+		if(revert->typeTrame == ACK_CON) {
+			printf("Recu aquittement de connexion.\n");
+		}
+		//write(1,buffer,longueur);
+		//break;
 	}
 
 	printf("\nfin de la reception. \n");

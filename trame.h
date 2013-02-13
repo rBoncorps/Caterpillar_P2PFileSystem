@@ -2,11 +2,18 @@
 #define TRAME_H
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
-typedef struct Trame Trame;
+
 typedef enum {CON_SERV,ACK_CON,DEM_AMI,DEM_CON_AMI,CMD, DEM_FIC,ENV_FIC,ACK,FIN_CON_AMI,FIN_CON_SERV} TypeTrame; 
+typedef struct Trame {
+	TypeTrame typeTrame;
+	int taille;
+	char data[256];
+} Trame;
 
- creationTrame(TypeTrame type,int taille, char* data); 
+Trame* creationTrame(TypeTrame type,int taille, char* dataT); 
 
 
  

@@ -1,11 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <linux/types.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
 #include <pthread.h>
 #include "map.h"
+#include "trame.h"
+#include "common.h"
 #define TAILLE_MAX_NOM 256
 #define TAILLE_MAX_TRAME 256 
 typedef struct sockaddr sockaddr;
@@ -24,12 +27,33 @@ void* receptionTrame(void* sock){
 	
 	char buffer[TAILLE_MAX_TRAME];
 	
-	if((longueur=read(nouveau_socket_descriptor,buffer,sizeof(buffer)))<=0)
+	if((longueur=read(nouveau_socket_descriptor,buffer,sizeof(buffer)))<=0) {
+		printf("ouch\n");
 		return;
-	
+	}	
 	buffer[longueur] = '\0';
-	
-	printf("1er caractere : %c \n",buffer[0]);
+	Trame* revert;
+	revert = (Trame*)&buffer;
+	if(revert->typeTrame == CON_SERV) {
+		printf("Received a CON_SERV trame type\n");
+		printf("Datas : %s\n",revert->data);
+		char* name;
+		char* ip;
+		if(extractNameIP(revert->data,&name,&ip) < 0) {
+			printf("Error during name & ip extraction\n");
+			return;
+		}
+		printf("extracted infos - name : %s, ip : %s\n",name, ip);
+		ajouterClient(mapIP,name,ip);
+		printf("\n -- Contenu mapIP -- \n");
+		afficherMap(mapIP);
+		printf(" --			--\n");
+		Trame* ackTrame = creationTrame(ACK_CON,0,"");
+		if(write(nouveau_socket_descriptor,(char*)ackTrame,256) < 0) {
+			perror("Erreur : impossible d'envoyer l'aquittement de connexion.\n");
+			return;
+		}
+	}
 
 }
 
