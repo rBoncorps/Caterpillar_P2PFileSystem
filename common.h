@@ -8,5 +8,6 @@
 #include <stdio.h>
 
 int extractNameIP(char* from, char** p_name, char** p_ip);
+int extractAskedFriendName(char* from, int dataSize, char** p_name);
 
 #endif

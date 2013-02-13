@@ -30,8 +30,6 @@ int main(int argc, char **argv)
 	
 	mapAmi = newMatrice();
 	
-	
-
 	char* mesg = malloc(strlen(name) + 1 + strlen(ip) + 1);
 	strcat(mesg,name);
 	strcat(mesg,":");
@@ -39,7 +37,6 @@ int main(int argc, char **argv)
 	mesg[strlen(mesg)] = '\0';
 	
 	trame = creationTrame(CON_SERV,strlen(mesg),mesg);
-	
 	
 	printf("Bienvenue dans Caterpillar p2p file system !\n");
 	
@@ -110,6 +107,12 @@ int main(int argc, char **argv)
 		sscanf(action,"%s %s",actionName, parameter);
 		if(strcmp(actionName,"add_friend") == 0) {
 			printf("want to add %s as a friend\n",parameter);
+			trame = creationTrame(DEM_AMI,strlen(parameter),parameter);
+			if((write(socket_descriptor, (char*)trame, 256))<0)
+			{
+				perror("erreur : impossible d'ecrire le message destine au serveur.");
+				exit(1);
+			}
 		}
 	}
 
