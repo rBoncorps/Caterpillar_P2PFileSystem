@@ -90,16 +90,19 @@ int ajouterClient(Matrice* map, char* name, char* ip) {
 	Pair *tmp_pairs, *pair;
 	char *tmp_ip;
 	char *new_name, *new_ip;
-	
+	//printf("coucou\n");
 	if (map == NULL) {
 		return 0;
 	}
 	if(name == NULL || ip == NULL) {
 		return 0;
 	}
-	
+	//printf("pouetpouet\n");
 	name_len = strlen(name);
+	//printf("bim\n");
 	ip_len = strlen(ip);
+	//printf("paf\n");
+	//printf("strlen(name) = %u\nstrlen(ip) = %u\n",name_len,ip_len);
 	
 	new_name = malloc((name_len + 1) * sizeof(char));
 	if (new_name == NULL) {
@@ -141,7 +144,7 @@ int ajouterClient(Matrice* map, char* name, char* ip) {
 			}
 		}
 		else {
-			tmp_pairs = realloc(map->pairs, (map->size + 1) * sizeof(Pair));
+			tmp_pairs = realloc(map->pairs, ((map->size) + 1) * sizeof(Pair));
 			if (tmp_pairs == NULL) {
 				free(new_name);
 				free(new_ip);

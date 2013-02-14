@@ -49,7 +49,7 @@ void* receptionTrame(void* sock){
 			printf("\n -- Contenu mapIP -- \n");
 			afficherMap(mapIP);
 			printf(" --			--\n");
-			Trame* ackTrame = creationTrame(ACK_CON,0,"");
+			Trame* ackTrame = creationTrame("big-daddy",ACK_CON,0,"");
 			if(write(nouveau_socket_descriptor,(char*)ackTrame,256) < 0) {
 				perror("Erreur : impossible d'envoyer l'aquittement de connexion.\n");
 				return;
@@ -64,6 +64,50 @@ void* receptionTrame(void* sock){
 				return;
 			}
 			printf("extracted infos - name : %s\n",name);
+			printf("trame from : %s\n",revert->nameSrc);
+			char* nameIP = getIP(mapIP,name);
+			if(nameIP == NULL) {
+				printf("Error, the server doesn't know %s\n",name);
+				return;
+			}
+			// Vérification que $name est connecté
+			Trame* verifConnectionTrame = creationTrame("big-daddy",CHECK_CON,0,"");
+			
+			int otherClientSocketDescriptor;
+			hostent* otherHost;
+			servent* otherService;
+			sockaddr_in adresse_other;
+			char* otherHostIP = getIP(mapIP,name);
+			if((otherHost = gethostbyname(otherHostIP)) == NULL) {
+				printf("Impossible de trouver le client %s\n",name);
+			}
+			
+			bcopy((char*)otherHost->h_addr, (char*)&adresse_other.sin_addr, otherHost->h_length);
+			adresse_other.sin_family = AF_INET;
+			adresse_other.sin_port = htons(5001);
+			
+			if((otherClientSocketDescriptor = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+			{
+				printf("erreur : impossible de creer la socket de connexion avec le client %s\n.",name);
+				exit(1);
+			}
+			
+			if((connect(otherClientSocketDescriptor, (sockaddr*)(&adresse_other), sizeof(adresse_other))) < 0)
+			{
+				printf("erreur : impossible de se connecter au client %s\n.",name);
+				exit(1);
+			}
+			
+			printf("connexion établie avec %s\n",name);
+			if(write(otherClientSocketDescriptor,(char*)verifConnectionTrame,256) < 0) {
+				perror("Erreur : impossible d'envoyer l'aquittement de connexion.\n");
+				return;
+			}
+
+			
+			/*if(write(nouveau_socket_descriptor,(char*)verifConnectionTrame,256) < 0) {
+				perror("Erreur : impossible d'envoyer la vérification de connexion");
+			}*/
 			/* TODO
 			 *	Verifier que $name est connecté
 			 * 	Envoi requete demande d'ami a $name de la part de client du socket

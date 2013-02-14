@@ -2,7 +2,7 @@
 
 typedef struct Trame Trame;
 
-Trame* creationTrame(TypeTrame type,int taille, char* dataT) {
+Trame* creationTrame(char* fromName, TypeTrame type,int taille, char* dataT) {
 	Trame* trame;
 	trame = malloc(sizeof(Trame));
 	trame->typeTrame = type;
@@ -23,7 +23,19 @@ Trame* creationTrame(TypeTrame type,int taille, char* dataT) {
 		}
 		trame->data[TAILLE_MAX_DATA] = '\0';
 	}
-	 return trame;
+	if(strlen(fromName) > TAILLE_MAX_USERNAME) {
+		printf("taille du username trop grande");
+		return NULL;
+	}
+	else {
+		strcat(trame->nameSrc,fromName);
+		trame->nameSrc[strlen(trame->nameSrc)] = '\0';
+		for(int i = strlen(trame->nameSrc) + 1 ; i < TAILLE_MAX_USERNAME -1; i++) {
+			trame->nameSrc[i] = '0';
+		}
+		trame->nameSrc[TAILLE_MAX_USERNAME] = '\0';
+	}
+	return trame;
 }
 
 Trame** decoupageTrame(TypeTrame type,int taille, char* dataT, int* nbTrames) {

@@ -4,13 +4,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#define TAILLE_MAX_USERNAME 100
 #define TAILLE_MAX_DATA 256
 
 
-typedef enum {CON_SERV,ACK_CON,DEM_AMI,DEM_CON_AMI,CMD, DEM_FIC,ENV_FIC,ACK,FIN_CON_AMI,FIN_CON_SERV} TypeTrame; 
+typedef enum {CON_SERV,ACK_CON,DEM_AMI,DEM_CON_AMI,CMD, DEM_FIC,ENV_FIC,ACK,FIN_CON_AMI,FIN_CON_SERV, ERROR, CHECK_CON} TypeTrame; 
 typedef struct Trame {
 	TypeTrame typeTrame;
-	//char ipSrc[16];
+	char nameSrc[TAILLE_MAX_USERNAME];
 	//char ipDest[16];
 	int numTrame;
 	int nbTrames;
@@ -18,7 +19,7 @@ typedef struct Trame {
 	char data[TAILLE_MAX_DATA];
 } Trame;
 
-Trame* creationTrame(TypeTrame type,int taille, char* dataT);
+Trame* creationTrame(char* fromName, TypeTrame type,int taille, char* dataT);
 Trame** decoupageTrame(TypeTrame type,int taille, char* dataT, int* nbTrames); 
 
 
