@@ -2,7 +2,7 @@
 
 typedef struct Trame Trame;
 
-Trame* creationTrame(char* fromName, TypeTrame type,int taille, char* dataT) {
+Trame* creationTrame(char* fromName, TypeTrame type,int taille,int numTrame,int nbTrame, char* dataT) {
 	Trame* trame;
 	trame = malloc(sizeof(Trame));
 	trame->typeTrame = type;
@@ -36,6 +36,8 @@ Trame* creationTrame(char* fromName, TypeTrame type,int taille, char* dataT) {
 		}
 		trame->nameSrc[TAILLE_MAX_USERNAME] = '\0';
 	}
+	trame->numTrame = numTrame;
+	trame->nbTrame = nbTrame;
 	return trame;
 }
 

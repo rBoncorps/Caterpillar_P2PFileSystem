@@ -1,19 +1,85 @@
 #include "trame_utils.h"
 
-/* Check 
-bool checkConnection(char* ip) {
-	Trame* checkTrame = creationTrame("big-daddy",CHECK_CON,0,"");
-	int otherClientSocketDescriptor;
-	hostent* otherHost;
-	servent* otherService;
-	sockaddr_in adresse_other;
-	char* otherHostIP = getIP(mapIP,name);
-	printf("ip du contact : %s\n",otherHostIP);
-	if((otherHost = gethostbyname(otherHostIP)) == NULL) {
-		printf("Impossible de trouver le client %s\n",name);
+/*! \brief Try to set a connexion to the given ip.
+	\return The opened socket descriptor or -1 if an error occured.
+*/
+int connectTo(char* name, char* ip) {
+	int clientSocketDescriptor;
+	hostent* clientHost;
+	servent* clientService;
+	sockaddr_in clientAdress;
+	/* Debug */
+	printf("[trame_utils::connect] IP à connecter : %s.\n",ip);
+	/* /Debug */
+	if((clientHost = gethostbyname(ip)) == NULL) {
+		printf("[trame_utils::connect] Impossible de trouver le client %s.",ip);
+		return -1;
 	}
-	
-	bcopy((char*)otherHost->h_addr, (char*)&adresse_other.sin_addr, otherHost->h_length);
-	adresse_other.sin_family = AF_INET;
+	bcopy((char*)clientHost->h_addr, (char*)&clientAdress.sin_addr, clientHost->h_length);
+	clientAdress.sin_family = AF_INET;
+	/* Debug : local dev */
+	if(strcmp(name,"bob") == 0) {
+		clientAdress.sin_port = htons(5002);
+		printf("[trame_utils::connect] Port du contact : 5002.\n",ip);
+	}
+	else if(strcmp(name,"alice") == 0) {
+		clientAdress.sin_port = htons(5003);
+		printf("[trame_utils::connect] Port du contact : 5003.\n",ip);
+	}
+	else {
+		clientAdress.sin_port = htons(5001);
+		printf("[trame_utils::connect] Port du contact : 5001.\n",ip);
+	}
+	/* /Debug : local dev */
+	if((clientSocketDescriptor = socket(AF_INET,SOCK_STREAM,0)) < 0) {
+		printf("[trame_utils::connect] Impossible de créer la socket de connexion avec le client.\n");
+		return -1;
+	}
+	if((connect(clientSocketDescriptor, (sockaddr*)(&clientAdress), sizeof(clientAdress))) < 0) {
+		printf("[trame_utils::connect] Impossible de se connecter au client %s.\n",ip);
+		return -1;
+	}
+	return clientSocketDescriptor;
+}
 
+/*! \brief Try to send Trame trame in the socketDescriptor.
+    \return 0 if the trame has been sent, -1 if an error occured.
+*/
+int sendTrame(Trame* trame, int socketDescriptor) {
+	if(write(socketDescriptor,(char*)trame,256) < 0) {
+		printf("[trame_utils::sendTrame] Impossible d'envoyer la trame dans la socket %d.\n",socketDescriptor);
+		return -1;
+	}
+	return 0;
+}
+
+/*! \brief Read a Trame from the given socketDescriptor.
+	\return The received Trame or NULL if an error occured.
+	\error Blocks the runtime if no Trame is sent.
+*/
+Trame* receiveTrame(int socketDescriptor) {
+	char buffer[TAILLE_MAX_TRAME];
+	int bufferSize;
+	if((bufferSize=read(socketDescriptor,buffer,sizeof(buffer))) <= 0) {
+		printf("[trame_utils::reveiveTrame] Une erreur est survenue à la lecture du socket %d.\n",socketDescriptor);
+		return NULL;
+	}
+	buffer[bufferSize] = '\0';
+	Trame* t = (Trame*)&buffer;
+	char* fromName = &(t->nameSrc[0]);
+	char* dataT = &(t->data[0]);
+	return creationTrame(fromName,t->typeTrame,t->taille,t->numTrame,t->nbTrames,dataT);
+}
+
+/*! \brief Check if the given is able to answer a request.
+	\error Blocks the runtime if the client doesn't answer.
+*/
+int checkConnection(int socketDescriptor) {
+	Trame* checkTrame = creationTrame("big-daddy",CHECK_CON,0,1,1,"");
+	sendTrame(checkTrame,socketDescriptor);
+	Trame* t = receiveTrame(socketDescriptor);
+	if(t->typeTrame == ACK_CON) {
+		return 0;
+	}
+	return -1;
 }
