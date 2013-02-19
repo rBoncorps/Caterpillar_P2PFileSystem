@@ -148,7 +148,11 @@ int ajouterClient(Matrice* map, char* name, char* ip) {
 			printf("la\n");
 			printf("%d\n",map->size);
 			printf("%x\n",map->pairs);
-			tmp_pairs = realloc(map->pairs, ((map->size) + 1) * sizeof(Pair));
+			printf("sizeof char* : %d\n",sizeof(char*));
+			printf("sizeof pair : %d\n",sizeof(Pair));
+			printf("%d\n",((map->size) + 1) * sizeof(Pair));
+			printf("length of ip / name : %d / %d \n",strlen(name),strlen(ip));
+			tmp_pairs = (Pair*)realloc((map->pairs), ((map->size) + 1) * sizeof(Pair));
 			printf("pouet\n");
 			if (tmp_pairs == NULL) {
 				printf("bim\n");
