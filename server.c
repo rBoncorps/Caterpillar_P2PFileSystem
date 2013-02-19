@@ -97,8 +97,8 @@ int main(){
 
 	//creation de la matrice contenant les noms et ip des personnes connectées
 	mapIP = newMatrice();
-	//ajouterClient(mapIP,"bob\0","127.0.0.1\0");
-	//ajouterClient(mapIP,"alice\0","127.0.0.1\0");
+	ajouterClient(mapIP,"_root_","0.0.0.0\0");
+	ajouterClient(mapIP,"_admin_\0","0.0.0.0\0");
 
 	int socket_descriptor,
 		 nouv_socket_descriptor,
