@@ -46,7 +46,8 @@ int connectTo(char* name, char* ip) {
     \return 0 if the trame has been sent, -1 if an error occured.
 */
 int sendTrame(Trame* trame, int socketDescriptor) {
-	if(write(socketDescriptor,(char*)trame,256) < 0) {
+	printf(" d : %s\n",trame->data);
+	if(write(socketDescriptor,(char*)trame,TAILLE_MAX_TRAME) < 0) {
 		printf("[trame_utils::sendTrame] Impossible d'envoyer la trame dans la socket %d.\n",socketDescriptor);
 		return -1;
 	}
@@ -67,9 +68,11 @@ Trame* receiveTrame(int socketDescriptor) {
 	buffer[bufferSize] = '\0';
 	Trame* t = (Trame*)&buffer;
 	char* fromName = &(t->nameSrc[0]);
-	char* dataT = &(t->data[0]);
-	return creationTrame(fromName,t->typeTrame,t->taille,t->numTrame,t->nbTrames,dataT);
+	//char* dataT = &(t->data[0]);
+	return creationTrame(fromName,t->typeTrame,t->taille,t->numTrame,t->nbTrames,t->data);
+	//return t;
 }
+
 
 /*! \brief Check if the given is able to answer a request.
 	\error Blocks the runtime if the client doesn't answer.

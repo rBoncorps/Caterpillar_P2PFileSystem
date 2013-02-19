@@ -21,7 +21,8 @@ typedef struct Trame {
 } Trame;
 
 Trame* creationTrame(char* fromName, TypeTrame type, int taille, int numTrame, int nbTrames, char* dataT);
-Trame** decoupageTrame(TypeTrame type,int taille, char* dataT, int* nbTrames); 
+Trame** decoupageTrame(char* fromName,TypeTrame type,int taille, char* dataT,int* nbTrames);
+char* extractMessage(Trame** tabTrames,int nbTrames);
 
 
  

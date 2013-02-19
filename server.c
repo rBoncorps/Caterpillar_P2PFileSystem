@@ -35,6 +35,36 @@ void* receptionTrame(void* sock) {
 		buffer[longueur] = '\0';*/
 		
 		Trame* revert = receiveTrame(nouveau_socket_descriptor);
+		printf("taille : %d\n",revert->taille);
+		if(revert->nbTrames > 1) {
+			int nbWaitedTrames = revert->nbTrames;
+			int nbReceivedTrames = 0;
+			Trame** tabTrames = malloc(nbWaitedTrames*sizeof(Trame*));
+			tabTrames[nbReceivedTrames] = revert;
+			nbReceivedTrames++;
+			int exitWaitingLoop = 0;
+			while (exitWaitingLoop == 0) {
+			printf("recue\n");
+				Trame* trame = receiveTrame(nouveau_socket_descriptor);
+				//check if the received trame was the one we were waiting for
+				if(trame->numTrame != (nbReceivedTrames + 1)) {
+					//wrong trame received
+					printf("wrong number received\n");
+				}
+				else{
+					tabTrames[nbReceivedTrames] = trame;
+					nbReceivedTrames++;
+					if(nbReceivedTrames == nbWaitedTrames) {
+						exitWaitingLoop = 1;
+					}
+					
+				}
+			}
+			
+			char* mesg = extractMessage(tabTrames,nbWaitedTrames);
+			printf("message : %s\n",mesg);
+			printf("finito dingo\n");
+		}
 		if(revert->typeTrame == CON_SERV) {
 			printf("Received a CON_SERV trame type\n");
 			printf("Datas : %s\n",revert->data);
@@ -88,6 +118,7 @@ void* receptionTrame(void* sock) {
 				printf("vraiment pas connecté\n");
 			}	
 		}
+		
 	}
 }
 
