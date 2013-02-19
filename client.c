@@ -6,12 +6,10 @@
 #include <string.h>
 #include "map.h"
 #include "trame.h"
+#include "trame_utils.h"
 
-#define TAILLE_MAX_TRAME 256 
-#define TAILLE_MAX_NOM 256
-
-#define PORT_SERVEUR_LOCAL 5002
-//#define PORT_SERVEUR_LOCAL 5003
+//#define PORT_SERVEUR_LOCAL 5002
+#define PORT_SERVEUR_LOCAL 5003
 
 typedef struct sockaddr sockaddr;
 typedef struct sockaddr_in sockaddr_in;
@@ -22,32 +20,24 @@ Matrice* mapAmi;
 Trame* trame;
 
 // test bob = 5002, alice = 5003
-char* name = "bob\0";
-char* ip = "127.0.0.1\0";
-//char* name = "alice\0";
+//char* name = "bob\0";
 //char* ip = "127.0.0.1\0";
+char* name = "alice\0";
+char* ip = "127.0.0.1\0";
 
 void* handleTrame(void* sock) {
 	printf("in handle trame\n");
 	int* tmp = (int*)sock;
-	int nsocket_descriptor = *tmp;
+	int socketDescriptor = *tmp;
 	int longueur;
 	char buffer[TAILLE_MAX_TRAME];
-	if((longueur=read(nsocket_descriptor,buffer,sizeof(buffer)))<=0) {
-		printf("ouch\n");
-		return;
-	}	
-	Trame* revert;
-	revert = (Trame*)&buffer;
-	if(revert->typeTrame == CHECK_CON) {
-		printf("CHECK_CON from %s\n",revert->nameSrc);
-		printf("data : %s\n",revert->data);
-		Trame* ackCheckConTrame = creationTrame(name,ACK_CON,0,"");
+	Trame* received = receiveTrame(socketDescriptor);
+	if(received->typeTrame == CHECK_CON) {
+		printf("CHECK_CON from %s\n",received->nameSrc);
+		printf("data : %s\n",received->data);
+		Trame* ackCheckConTrame = creationTrame(name,ACK_CON,0,1,1,"");
 		printf("writed namesrc : %s\n",name);
-		if(write(nsocket_descriptor,(char*)ackCheckConTrame,256) < 0) {
-			printf("%s : impossible d'envoyer l'aquittement.\n",name);
-		}
-		printf("%s : aquittement envoyé\n",name);
+		sendTrame(ackCheckConTrame,socketDescriptor);
 	}
 	printf("side client trame recue\n");
 }
@@ -58,9 +48,9 @@ void* boucleReception() {
 	hostent* serverHost;
 	servent* serverService;
 	sockaddr_in adresse_server, adresse_client_courant;
-	char machine[TAILLE_MAX_NOM+1];
+	char machine[TAILLE_MAX_USERNAME+1];
 
-	gethostname(machine,TAILLE_MAX_NOM);
+	gethostname(machine,TAILLE_MAX_USERNAME);
 
 	if((serverHost=gethostbyname(machine))==NULL) {
 		perror("Erreur : impossible de trouver le serveur a partir de ce nom \n");
@@ -118,7 +108,7 @@ int main(int argc, char **argv)
 	strcat(mesg,ip);
 	mesg[strlen(mesg)] = '\0';
 	
-	trame = creationTrame(name,CON_SERV,strlen(mesg),mesg);
+	trame = creationTrame(name,CON_SERV,strlen(mesg),1,1,mesg);
 	
 	printf("Bienvenue dans Caterpillar p2p file system !\n");
 	
@@ -198,7 +188,7 @@ int main(int argc, char **argv)
 		sscanf(action,"%s %s",actionName, parameter);
 		if(strcmp(actionName,"add_friend") == 0) {
 			printf("want to add %s as a friend\n",parameter);
-			trame = creationTrame(name,DEM_AMI,strlen(parameter),parameter);
+			trame = creationTrame(name,DEM_AMI,strlen(parameter),1,1,parameter);
 			if((write(socket_descriptor, (char*)trame, 256))<0)
 			{
 				perror("erreur : impossible d'ecrire le message destine au serveur.");

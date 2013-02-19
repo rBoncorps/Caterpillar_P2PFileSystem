@@ -37,7 +37,7 @@ Trame* creationTrame(char* fromName, TypeTrame type,int taille,int numTrame,int 
 		trame->nameSrc[TAILLE_MAX_USERNAME] = '\0';
 	}
 	trame->numTrame = numTrame;
-	trame->nbTrame = nbTrame;
+	trame->nbTrames = nbTrame;
 	return trame;
 }
 

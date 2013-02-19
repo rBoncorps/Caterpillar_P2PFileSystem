@@ -1,7 +1,7 @@
-client: client.o map.o trame.o
-	gcc -o client client.o map.o trame.o -pthread
+client: client.o map.o trame.o trame_utils.o
+	gcc -o client client.o map.o trame.o trame_utils.o -pthread
 	
-server: server.o map.o trame.o common.o
+server: server.o map.o trame.o common.o trame_utils.o
 	gcc -o server server.o map.o trame.o common.o trame_utils.o -pthread
 
 server.o: server.c
