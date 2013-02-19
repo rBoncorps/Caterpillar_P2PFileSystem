@@ -10,6 +10,9 @@
 #define TAILLE_MAX_TRAME 256 
 #define TAILLE_MAX_NOM 256
 
+#define PORT_SERVEUR_LOCAL 5002
+//#define PORT_SERVEUR_LOCAL 5003
+
 typedef struct sockaddr sockaddr;
 typedef struct sockaddr_in sockaddr_in;
 typedef struct hostent hostent;
@@ -18,16 +21,34 @@ typedef struct servent servent;
 Matrice* mapAmi;
 Trame* trame;
 
+// test bob = 5002, alice = 5003
+char* name = "bob\0";
+char* ip = "127.0.0.1\0";
+//char* name = "alice\0";
+//char* ip = "127.0.0.1\0";
+
 void* handleTrame(void* sock) {
 	printf("in handle trame\n");
 	int* tmp = (int*)sock;
-	int socket_descriptor = *tmp;
+	int nsocket_descriptor = *tmp;
 	int longueur;
 	char buffer[TAILLE_MAX_TRAME];
-	if((longueur=read(socket_descriptor,buffer,sizeof(buffer)))<=0) {
+	if((longueur=read(nsocket_descriptor,buffer,sizeof(buffer)))<=0) {
 		printf("ouch\n");
 		return;
 	}	
+	Trame* revert;
+	revert = (Trame*)&buffer;
+	if(revert->typeTrame == CHECK_CON) {
+		printf("CHECK_CON from %s\n",revert->nameSrc);
+		printf("data : %s\n",revert->data);
+		Trame* ackCheckConTrame = creationTrame(name,ACK_CON,0,"");
+		printf("writed namesrc : %s\n",name);
+		if(write(nsocket_descriptor,(char*)ackCheckConTrame,256) < 0) {
+			printf("%s : impossible d'envoyer l'aquittement.\n",name);
+		}
+		printf("%s : aquittement envoyé\n",name);
+	}
 	printf("side client trame recue\n");
 }
 
@@ -48,7 +69,7 @@ void* boucleReception() {
 	bcopy((char*)serverHost->h_addr,(char*)&adresse_server.sin_addr,serverHost->h_length);
 	adresse_server.sin_family = serverHost->h_addrtype;
 	adresse_server.sin_addr.s_addr= INADDR_ANY;
-	adresse_server.sin_port = htons(5001);
+	adresse_server.sin_port = htons(PORT_SERVEUR_LOCAL);
 	
 	if((socket_descriptor = socket(AF_INET , SOCK_STREAM, 0))<0){
 		perror("impossible de creer la socket de d'écoute cote client .");
@@ -59,16 +80,17 @@ void* boucleReception() {
 		perror("impossible de lier la socket à l'adresse de d'écoute cote client .");
 		exit(1);
 	}
-
+	printf("listen serveur local lancé\n");
 	listen(socket_descriptor,5);
-	pthread_t handleTrame;
+	pthread_t handleTrame_th;
 	for(;;){
 		longueur_adresse_courante = sizeof(adresse_client_courant);
 		if((nouveau_socket_descriptor= accept(socket_descriptor,(sockaddr*)(&adresse_client_courant),&longueur_adresse_courante))<0){
 			perror("impossible d'accepter la connexion.");
 			exit(1);
 		}
-		if(pthread_create(&handleTrame, NULL, handleTrame, (void*)&nouveau_socket_descriptor)) {
+		printf("%s : sur le point de créer un thread pour le message\n",name);
+		if(pthread_create(&handleTrame_th, NULL, handleTrame, (void*)&nouveau_socket_descriptor)) {
 			perror("Trop de threads hihihihi");
 			return;
 		}
@@ -79,9 +101,7 @@ void* boucleReception() {
 
 int main(int argc, char **argv)
 {
-	
-	char* name = "bob\0";
-	char* ip = "127.0.0.5\0";
+	printf("hello %s\n",name);
 	int socket_descriptor,longueur;
 	sockaddr_in adresse_locale;
 	hostent *ptr_host;
@@ -183,6 +203,9 @@ int main(int argc, char **argv)
 			{
 				perror("erreur : impossible d'ecrire le message destine au serveur.");
 				exit(1);
+			}
+			else {
+				printf("trame DEM_AMI envoyée\n");
 			}
 		}
 	}

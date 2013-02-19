@@ -11,10 +11,11 @@ int extractNameIP(char* from, char** p_name, char** p_ip) {
 		if(i > MAX_NAME_SIZE) {
 			return -1;
 		}
+		printf("readed char %c\n",from[i]);
 		name[i] = from[i];
 		i++;
 	}
-	name[i+1] = '\0';
+	name[i] = '\0';
 	i++;
 	int j = 0;
 	while(from[i] != '\0' && j < IP_SIZE+1) {
@@ -23,6 +24,7 @@ int extractNameIP(char* from, char** p_name, char** p_ip) {
 		j++;
 	}
 	ip[j+1] = '\0';
+	printf("extracted name : %s\n",name);
 	*p_name = name;
 	*p_ip = ip;
 	return 0;

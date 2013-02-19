@@ -28,7 +28,8 @@ Trame* creationTrame(char* fromName, TypeTrame type,int taille, char* dataT) {
 		return NULL;
 	}
 	else {
-		strcat(trame->nameSrc,fromName);
+		//strcat(trame->nameSrc,fromName);
+		strcpy(trame->nameSrc,fromName);
 		trame->nameSrc[strlen(trame->nameSrc)] = '\0';
 		for(int i = strlen(trame->nameSrc) + 1 ; i < TAILLE_MAX_USERNAME -1; i++) {
 			trame->nameSrc[i] = '0';

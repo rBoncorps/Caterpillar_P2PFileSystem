@@ -71,20 +71,35 @@ void* receptionTrame(void* sock){
 				return;
 			}
 			// Vérification que $name est connecté
-			Trame* verifConnectionTrame = creationTrame("big-daddy",CHECK_CON,0,"");
+			char* ip = getIP(mapIP,name);
+			bool isConnected = checkConnection(ip);
+			
+			//Trame* verifConnectionTrame = creationTrame("big-daddy",CHECK_CON,0,"");
 			
 			int otherClientSocketDescriptor;
 			hostent* otherHost;
 			servent* otherService;
 			sockaddr_in adresse_other;
 			char* otherHostIP = getIP(mapIP,name);
+			printf("ip du contact : %s\n",otherHostIP);
 			if((otherHost = gethostbyname(otherHostIP)) == NULL) {
 				printf("Impossible de trouver le client %s\n",name);
 			}
 			
 			bcopy((char*)otherHost->h_addr, (char*)&adresse_other.sin_addr, otherHost->h_length);
 			adresse_other.sin_family = AF_INET;
-			adresse_other.sin_port = htons(5001);
+			// test pour dev local
+			if(strcmp(name,"bob") == 0) {
+				adresse_other.sin_port = htons(5002);
+				printf("port du contact : 5002\n");
+			}
+			else if(strcmp(name,"alice") == 0) {
+				adresse_other.sin_port = htons(5003);
+				printf("port du contact : 5003\n");
+			}
+			else {
+				printf("Client inconnu (dev local) \n");
+			}
 			
 			if((otherClientSocketDescriptor = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 			{
@@ -102,6 +117,29 @@ void* receptionTrame(void* sock){
 			if(write(otherClientSocketDescriptor,(char*)verifConnectionTrame,256) < 0) {
 				perror("Erreur : impossible d'envoyer l'aquittement de connexion.\n");
 				return;
+			}
+			char otherBuffer[TAILLE_MAX_TRAME];
+			int otherLongueur;
+			if((otherLongueur=read(otherClientSocketDescriptor,otherBuffer,sizeof(otherBuffer)))<=0) {
+				printf("ouch\n");
+				return;
+			}
+			printf("recu quelque chose\n");
+			otherBuffer[otherLongueur] = '\0';
+			Trame* ackCheckConTrame;
+			ackCheckConTrame = (Trame*)&otherBuffer;
+			printf("de %s\n",ackCheckConTrame->nameSrc);
+			printf("%u\n",ackCheckConTrame->typeTrame);
+			if(ackCheckConTrame->typeTrame == DEM_AMI) {
+				printf("dem ami ...\n");
+			}
+			else if(ackCheckConTrame->typeTrame == ACK_CON) {
+				printf("ack con ...\n"); 
+			}
+			printf("%s\n",ackCheckConTrame->data);
+			
+			if(ackCheckConTrame->typeTrame == ACK_CON) {
+				printf("Recu un aquittement de %s\n",ackCheckConTrame->nameSrc);	
 			}
 
 			
