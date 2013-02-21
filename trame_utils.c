@@ -83,7 +83,17 @@ Trame* receiveTrame(int socketDescriptor) {
 	newTrame->numTrame = t->numTrame;
 	newTrame->nbTrames = t->nbTrames;
 	newTrame->taille = t->taille;
-	strcpy(newTrame->data,t->data);
+	//strcpy(newTrame->data, t->data);
+	bcopy(t->data,newTrame->data,TAILLE_MAX_DATA);
+	//newTrame->data[TAILLE_MAX_DATA] = '\0';
+	printf(" ********* Debug ************ \n");
+	printf("%s\n\n-------------------------\n\n%s\n",t->data, newTrame->data);
+	if(t->typeTrame == ENV_FIC) {
+		FILE* file2 = NULL;
+		file2 = fopen("FichierB/oubaoubahop.pdf","a");
+		fwrite(newTrame->data,sizeof(char),TAILLE_MAX_DATA-1,file2);
+		fclose(file2);
+	}
 	return newTrame;
 	//return t;
 }
