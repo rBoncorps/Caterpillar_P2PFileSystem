@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #define TAILLE_MAX_USERNAME 100
-#define TAILLE_MAX_DATA 256
+#define TAILLE_MAX_DATA 1000
 #define TAILLE_MAX_TRAME 4*sizeof(int) + TAILLE_MAX_DATA + TAILLE_MAX_USERNAME
 
 

@@ -33,26 +33,34 @@ void* receptionTrame(void* sock) {
 		printf("trame recue\n");
 		sleep(5);
 		buffer[longueur] = '\0';*/
+		int tailleFichier = 0;
 		
 		Trame* revert = receiveTrame(nouveau_socket_descriptor);
-		printf("taille : %d\n",revert->taille);
 		if(revert->nbTrames > 1) {
+			FILE* file1 = NULL;
+			char* file1Path = "FichierB/test.pdf";
+			file1 = fopen(file1Path, "w");
 			int nbWaitedTrames = revert->nbTrames;
 			int nbReceivedTrames = 0;
 			Trame** tabTrames = malloc(nbWaitedTrames*sizeof(Trame*));
 			tabTrames[nbReceivedTrames] = revert;
+			tailleFichier += revert->taille;
+			//fwrite(revert->data,sizeof * revert->data,revert->taille,file1);
 			nbReceivedTrames++;
 			int exitWaitingLoop = 0;
 			while (exitWaitingLoop == 0) {
-			printf("recue\n");
+			printf("recue %d\n",48-nbReceivedTrames);
 				Trame* trame = receiveTrame(nouveau_socket_descriptor);
 				//check if the received trame was the one we were waiting for
 				if(trame->numTrame != (nbReceivedTrames + 1)) {
 					//wrong trame received
 					printf("wrong number received\n");
+					sleep(5);
 				}
 				else{
 					tabTrames[nbReceivedTrames] = trame;
+					//fwrite(trame->data,sizeof(char),trame->taille,file1);
+					tailleFichier += trame->taille;
 					nbReceivedTrames++;
 					if(nbReceivedTrames == nbWaitedTrames) {
 						exitWaitingLoop = 1;
@@ -62,7 +70,17 @@ void* receptionTrame(void* sock) {
 			}
 			
 			char* mesg = extractMessage(tabTrames,nbWaitedTrames);
-			printf("message : %s\n",mesg);
+			//printf("message : %s\n",mesg);
+			printf("taille totale : %d\n",tailleFichier);
+			if (file1 != NULL) {
+				fwrite(mesg,sizeof(char),tailleFichier,file1);
+				//fprintf(file,mesg);
+				fclose(file1);
+			}
+			else {
+				printf("error opening");
+			}
+			
 			printf("finito dingo\n");
 		}
 		if(revert->typeTrame == CON_SERV) {
@@ -82,7 +100,7 @@ void* receptionTrame(void* sock) {
 			afficherMap(mapIP);
 			printf(" --			--\n");
 			Trame* ackTrame = creationTrame("big-daddy",ACK_CON,0,1,1,"");
-			if(write(nouveau_socket_descriptor,(char*)ackTrame,256) < 0) {
+			if(write(nouveau_socket_descriptor,(char*)ackTrame,TAILLE_MAX_TRAME) < 0) {
 				perror("Erreur : impossible d'envoyer l'aquittement de connexion.\n");
 				return;
 			}

@@ -46,7 +46,6 @@ int connectTo(char* name, char* ip) {
     \return 0 if the trame has been sent, -1 if an error occured.
 */
 int sendTrame(Trame* trame, int socketDescriptor) {
-	printf(" d : %s\n",trame->data);
 	if(write(socketDescriptor,(char*)trame,TAILLE_MAX_TRAME) < 0) {
 		printf("[trame_utils::sendTrame] Impossible d'envoyer la trame dans la socket %d.\n",socketDescriptor);
 		return -1;
@@ -59,17 +58,33 @@ int sendTrame(Trame* trame, int socketDescriptor) {
 	\error Blocks the runtime if no Trame is sent.
 */
 Trame* receiveTrame(int socketDescriptor) {
+	
 	char buffer[TAILLE_MAX_TRAME];
 	int bufferSize;
-	if((bufferSize=read(socketDescriptor,buffer,sizeof(buffer))) <= 0) {
+	if((bufferSize=read(socketDescriptor,buffer,TAILLE_MAX_TRAME)) <= 0) {
 		printf("[trame_utils::reveiveTrame] Une erreur est survenue à la lecture du socket %d.\n",socketDescriptor);
 		return NULL;
 	}
 	buffer[bufferSize] = '\0';
 	Trame* t = (Trame*)&buffer;
+	if(t->typeTrame == ENV_FIC) {
+		FILE* file1 = NULL;
+		file1 = fopen("FichierB/icalsurlapistedumarsupilami.pdf","a");
+		fwrite(t->data,sizeof(char),TAILLE_MAX_DATA-1,file1);
+		fclose(file1);
+	}
+	//printf("trame->taille : %d\n",t->taille);
 	char* fromName = &(t->nameSrc[0]);
 	//char* dataT = &(t->data[0]);
-	return creationTrame(fromName,t->typeTrame,t->taille,t->numTrame,t->nbTrames,t->data);
+	//return creationTrame(fromName,t->typeTrame,t->taille,t->numTrame,t->nbTrames,t->data);
+	Trame* newTrame = (Trame*)malloc(sizeof(Trame));
+	newTrame->typeTrame = t->typeTrame;
+	strcpy(newTrame->nameSrc,t->nameSrc);
+	newTrame->numTrame = t->numTrame;
+	newTrame->nbTrames = t->nbTrames;
+	newTrame->taille = t->taille;
+	strcpy(newTrame->data,t->data);
+	return newTrame;
 	//return t;
 }
 

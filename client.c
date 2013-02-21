@@ -202,7 +202,7 @@ int main(int argc, char **argv)
 			printf("want to test multiTrame\n");
 			char* mesg = "Mais cette capacité ne se maîtrise pas sans efforts. Il est necessaire d'avoir des connaissances et des compétences acquise tout au long de sa carrière. A commencer par la formation. A l'université de Nantes, le master ALMA orienté génie logiciel prône la gestion collaborative de projet. Ceci nous apprend à travailler en équipe tout au long de l'année pour réaliser des projets sur des sujets techniques les plus variés. Cette méthode de travail renforce la capacité d'organisation et de rigueur ainsi que la capacité d'adaptation.C'est un cursus qui responsabilise ses élèves en les projetant dans le monde du travail, les poussant a prendre des initiatives.	Ensuite viens l'expérience, avec une vraie confrontation à l'entreprise. Lors du stage de fin d'étude de Licence en informatique, j'ai eu l'occasion d'être intergré dans un processus de développement logiciel. Rejoindre une équipe nécessite d'avoir un tempérament social et parfois même médiateur en cas de conflits. Une volonté d'intéragir avec les membres du groupe et de dissiper les tensions.\0";
 			//mesg[strlen(mesg)] = '\0';
-			printf("texte a envoyer : %s , longueur %ld\n",mesg,strlen(mesg));
+			//printf("texte a envoyer : %s , longueur %ld\n",mesg,strlen(mesg));
 			int nbTrames;
 			Trame** tramesMesg = decoupageTrame(name,ENV_FIC,strlen(mesg), mesg,&nbTrames); 
 			int i = 0;
@@ -210,6 +210,73 @@ int main(int argc, char **argv)
 				printf("trame %d envoye\n : data -> %s\n",i,tramesMesg[i]->data);
 				int retValue = sendTrame(tramesMesg[i],socket_descriptor);
 				sleep(2);
+			}
+			
+		}
+		if(strcmp(actionName,"testFichier") == 0) {
+			printf("want to test file Trame\n");
+			FILE* file = NULL;
+			char* filePath = "FichierA/Spec_Communication.pdf";
+			file = fopen(filePath, "r");
+			char* contenu = NULL;
+			int longueurTotale = 0;
+			int firstTime = 0;
+			
+			if (file != NULL)
+			{
+				// On peut lire et écrire dans le fichier
+				int pos = fseek(file,0,SEEK_END);
+				int size = ftell(file);
+				rewind(file);
+				char* buffer = malloc((size) * sizeof(char));
+				printf("size : %d\n",size);
+				int longLu = 0;
+				longLu = fread( buffer , sizeof(char) , size , file );
+				sleep(2);
+				fclose(file);
+				//while((longLu = fread( buffer , sizeof(char) , size , file )) > 0) {
+					/*longueurTotale += longLu;
+					printf("longLu: %d\n",longLu);
+					if(firstTime == 0) {
+						contenu = malloc(longLu*sizeof(char));
+						firstTime = 1;
+					}
+					else {
+						char* tmp = (char*)realloc(contenu,longueurTotale*sizeof(char));
+						if (tmp = NULL) {
+							contenu = tmp;
+						}
+					}
+					strncat(contenu,buffer,longLu);
+					*/
+					
+					/*realloc(contenu,(longueurTotale)*sizeof(char));
+					contenu[longueurTotale] = '\0';
+					printf("contenu : %s\n",contenu);
+					strcat(contenu,buffer);
+					*/
+				//}
+				//printf("contenu : %s\n",contenu);
+				
+				int nbTrames;
+				sleep(2);
+				Trame** tramesMesg = decoupageTrame(name,ENV_FIC,size, buffer,&nbTrames); 
+				int i = 0;
+				printf("nbTrames : %d\n",nbTrames);
+				FILE* file1 = NULL;
+				file1 = fopen("FichierB/ccccdelamerde.pdf","w");
+				for(i ; i < nbTrames ; i++) {
+					//printf("trame %d envoye\n : data -> %s\n",i,tramesMesg[i]->data);
+					int retValue = sendTrame(tramesMesg[i],socket_descriptor);
+					fwrite(tramesMesg[i]->data,sizeof(char),TAILLE_MAX_DATA-1,file1);
+					sleep(2);
+				}
+				fclose(file1);
+			}
+			else
+			{
+				// On affiche un message d'erreur si on veut
+				printf("Impossible d'ouvrir le fichier");
 			}
 			
 		}

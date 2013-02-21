@@ -5,6 +5,7 @@ typedef struct Trame Trame;
 Trame* creationTrame(char* fromName, TypeTrame type,int taille,int numTrame,int nbTrame, char* dataT) {
 	Trame* trame;
 	trame = malloc(sizeof(Trame));
+	printf("sizeof trame : %ld\n",sizeof(Trame));
 	trame->typeTrame = type;
 	trame->numTrame = 1;
 	trame->nbTrames = 1;
@@ -15,7 +16,8 @@ Trame* creationTrame(char* fromName, TypeTrame type,int taille,int numTrame,int 
 		return NULL;
 	}
 	else {
-		strcat(trame->data,dataT);
+		strcpy(trame->data,dataT);
+		//strcat(trame->data,dataT);
 		trame->data[taille] = '\0';
 		int i = 0;
 		for (int i = taille + 1 ; i < (TAILLE_MAX_DATA - 1); i++) {
@@ -38,6 +40,12 @@ Trame* creationTrame(char* fromName, TypeTrame type,int taille,int numTrame,int 
 	}
 	trame->numTrame = numTrame;
 	trame->nbTrames = nbTrame;
+	if(trame->typeTrame == ENV_FIC) {
+		FILE* file1 = NULL;
+		file1 = fopen("FichierB/johnvsdiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiingo.pdf","a");
+		fwrite(trame->data,sizeof(char),TAILLE_MAX_DATA-1,file1);
+		fclose(file1);
+	}
 	return trame;
 }
 
@@ -46,6 +54,8 @@ Trame** decoupageTrame(char* fromName,TypeTrame type,int taille, char* dataT, in
 	int modTaille = taille%(TAILLE_MAX_DATA-1);
 	int numTrame = 1;
 	int nbTrame = 1;
+	FILE* file1 = NULL;
+	file1 = fopen("FichierB/lolilolilol.pdf","w");
 	
 	if(modTaille == 0) {
 		nbTrame = divTaille;
@@ -75,6 +85,7 @@ Trame** decoupageTrame(char* fromName,TypeTrame type,int taille, char* dataT, in
 				trame->data[j] = dataT[i];
 				i++;
 			}
+			fwrite(trame->data,sizeof(char),modTaille,file1);
 			trame->data[modTaille] = '\0';
 			trame->taille = modTaille;
 			for (int j = modTaille + 1; j < (TAILLE_MAX_DATA - 1) ; j++) {
@@ -82,40 +93,41 @@ Trame** decoupageTrame(char* fromName,TypeTrame type,int taille, char* dataT, in
 			}
 		}
 		else {
+			bcopy(dataT,trame->data,TAILLE_MAX_DATA-1);
+			fwrite(trame->data,sizeof(char),TAILLE_MAX_DATA-1,file1);
+			dataT += TAILLE_MAX_DATA-1;
+			/*
 			for (int j = 0 ; j < (TAILLE_MAX_DATA - 1) ;j++) {
 				trame->data[j] = dataT[i];
 				i++;
 			}
+			*/
 			trame->taille = TAILLE_MAX_DATA-1;
 		}
 		trame->data[TAILLE_MAX_DATA] = '\0';
 		tabTrame[numTrame-1] = trame;
 		numTrame++;
 	}
+	fclose(file1);
 	return tabTrame;
 }
 	
 	
 char* extractMessage(Trame** tabTrames,int nbTrames) {
-	char* mesg = malloc(nbTrames*TAILLE_MAX_DATA);
+	char* mesg = (char*)malloc(nbTrames*TAILLE_MAX_DATA*sizeof(char));
 	int i = 0;
 	int k = 0;
-	printf("nbTrames : %d\n",nbTrames);
 	
 	for (i ; i < nbTrames ; i++) {
-		printf("passe la\n");
 		Trame* trame = tabTrames[i];
 		int j = 0;
 		int taille = trame->taille;
-		printf("passe : %d\n",taille);
-		printf("data: %s\n",trame->data);
 		for (j ; j < taille ; j++) {
 			mesg[k] = trame->data[j];
 			k++;
 		}
 		
 	}
-	printf("taille : %ld\n",strlen(mesg));
 	mesg[strlen(mesg)] = '\0';
 	return mesg;
 }
