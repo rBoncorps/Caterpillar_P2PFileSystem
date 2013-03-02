@@ -114,7 +114,7 @@ void* receptionTrame(void* sock) {
 				printf("%s\n",errorMessage);
 				Trame* errorTrame = creationTrame("big-daddy", ERROR, strlen(errorMessage), 1, 1, errorMessage);
 				int sent = sendTrame(errorTrame, nouveau_socket_descriptor);
-				return;
+				continue;
 			}
 			int sd = connectTo(name,ip);
 			if(sd >= 0) {
