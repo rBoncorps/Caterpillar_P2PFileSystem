@@ -25,14 +25,7 @@ void* receptionTrame(void* sock) {
 	int longueur;
 	
 	while(!exitLoop) {
-		/*char buffer[TAILLE_MAX_TRAME];
-		if((longueur=read(nouveau_socket_descriptor,buffer,sizeof(buffer)))<=0) {
-			printf("ouch\n");
-			return;
-		}	
-		printf("trame recue\n");
-		sleep(5);
-		buffer[longueur] = '\0';*/
+
 		int tailleFichier = 0;
 		
 		Trame* revert = receiveTrame(nouveau_socket_descriptor);
@@ -100,10 +93,7 @@ void* receptionTrame(void* sock) {
 			afficherMap(mapIP);
 			printf(" --			--\n");
 			Trame* ackTrame = creationTrame("big-daddy",ACK_CON,0,1,1,"");
-			if(write(nouveau_socket_descriptor,(char*)ackTrame,TAILLE_MAX_TRAME) < 0) {
-				perror("Erreur : impossible d'envoyer l'aquittement de connexion.\n");
-				return;
-			}
+			int sent = sendTrame(ackTrame,nouveau_socket_descriptor);
 		}
 		if(revert->typeTrame == DEM_AMI) {
 			printf("Received a DEM_AMI trame type\n");	
@@ -115,13 +105,17 @@ void* receptionTrame(void* sock) {
 			}
 			printf("extracted infos - name : %s\n",name);
 			printf("trame from : %s\n",revert->nameSrc);
-			char* nameIP = getIP(mapIP,name);
-			if(nameIP == NULL) {
-				printf("Error, the server doesn't know %s\n",name);
+			char* ip = getIP(mapIP,name);
+			if(ip == NULL) {
+				char errorMessage[2000];
+				strcpy(errorMessage,"Error : the server doesn't know \0");
+				strcat(errorMessage, name);
+				strcat(errorMessage, ".\0");
+				printf("%s\n",errorMessage);
+				Trame* errorTrame = creationTrame("big-daddy", ERROR, strlen(errorMessage), 1, 1, errorMessage);
+				int sent = sendTrame(errorTrame, nouveau_socket_descriptor);
 				return;
 			}
-			// Vérification que $name est connecté
-			char* ip = getIP(mapIP,name);
 			int sd = connectTo(name,ip);
 			if(sd >= 0) {
 				int isConnected = checkConnection(sd);
@@ -129,6 +123,8 @@ void* receptionTrame(void* sock) {
 					printf("connected !\n");
 				}
 				else {
+					
+					//Trame* errorTrame = creationTrame("big-daddy",ERROR, 
 					printf("pas connecté 8DDDDDD\n");
 				}
 			}

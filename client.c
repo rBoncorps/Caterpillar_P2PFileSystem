@@ -110,10 +110,15 @@ int main(int argc, char **argv)
 		char* actionName = malloc(100*sizeof(char));
 		char* parameter = malloc(100*sizeof(char));
 		sscanf(action,"%s %s",actionName, parameter);
+		
 		if(strcmp(actionName,"add_friend") == 0) {
 			printf("want to add %s as a friend\n",parameter);
 			trame = creationTrame(name,DEM_AMI,strlen(parameter),1,1,parameter);
 			int sent = sendTrame(trame, socket_descriptor);
+			Trame* response = receiveTrame(socket_descriptor);
+			if(response->typeTrame == ERROR) {
+				printf("%s\n",response->data);
+			}
 		}
 		
 		
