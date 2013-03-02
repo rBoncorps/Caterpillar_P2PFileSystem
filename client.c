@@ -45,33 +45,9 @@ void* handleTrame(void* sock) {
 void* boucleReception() {
 	//création d'un socket descriptor
 	int socket_descriptor, nouveau_socket_descriptor, longueur_adresse_courante;
-	hostent* serverHost;
-	servent* serverService;
 	sockaddr_in adresse_server, adresse_client_courant;
-	char machine[TAILLE_MAX_USERNAME+1];
-
-	gethostname(machine,TAILLE_MAX_USERNAME);
-
-	if((serverHost=gethostbyname(machine))==NULL) {
-		perror("Erreur : impossible de trouver le serveur a partir de ce nom \n");
-		exit(1);
-	}
-	bcopy((char*)serverHost->h_addr,(char*)&adresse_server.sin_addr,serverHost->h_length);
-	adresse_server.sin_family = serverHost->h_addrtype;
-	adresse_server.sin_addr.s_addr= INADDR_ANY;
-	adresse_server.sin_port = htons(PORT_SERVEUR_LOCAL);
+	socket_descriptor = startListening(name);
 	
-	if((socket_descriptor = socket(AF_INET , SOCK_STREAM, 0))<0){
-		perror("impossible de creer la socket de d'écoute cote client .");
-		exit(1);
-	}
-	
-	if((bind(socket_descriptor,(sockaddr*)(&adresse_server),sizeof(adresse_server)))<0){
-		perror("impossible de lier la socket à l'adresse de d'écoute cote client .");
-		exit(1);
-	}
-	printf("listen serveur local lancé\n");
-	listen(socket_descriptor,5);
 	pthread_t handleTrame_th;
 	for(;;) {
 		longueur_adresse_courante = sizeof(adresse_client_courant);
@@ -137,15 +113,10 @@ int main(int argc, char **argv)
 		if(strcmp(actionName,"add_friend") == 0) {
 			printf("want to add %s as a friend\n",parameter);
 			trame = creationTrame(name,DEM_AMI,strlen(parameter),1,1,parameter);
-			if((write(socket_descriptor, (char*)trame, TAILLE_MAX_TRAME))<0)
-			{
-				perror("erreur : impossible d'ecrire le message destine au serveur.");
-				exit(1);
-			}
-			else {
-				printf("trame DEM_AMI envoyée\n");
-			}
+			int sent = sendTrame(trame, socket_descriptor);
 		}
+		
+		
 		if(strcmp(actionName,"testMulti") == 0) {
 			printf("want to test multiTrame\n");
 			char* mesg = "Mais cette capacité ne se maîtrise pas sans efforts. Il est necessaire d'avoir des connaissances et des compétences acquise tout au long de sa carrière. A commencer par la formation. A l'université de Nantes, le master ALMA orienté génie logiciel prône la gestion collaborative de projet. Ceci nous apprend à travailler en équipe tout au long de l'année pour réaliser des projets sur des sujets techniques les plus variés. Cette méthode de travail renforce la capacité d'organisation et de rigueur ainsi que la capacité d'adaptation.C'est un cursus qui responsabilise ses élèves en les projetant dans le monde du travail, les poussant a prendre des initiatives.	Ensuite viens l'expérience, avec une vraie confrontation à l'entreprise. Lors du stage de fin d'étude de Licence en informatique, j'ai eu l'occasion d'être intergré dans un processus de développement logiciel. Rejoindre une équipe nécessite d'avoir un tempérament social et parfois même médiateur en cas de conflits. Une volonté d'intéragir avec les membres du groupe et de dissiper les tensions.\0";

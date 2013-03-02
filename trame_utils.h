@@ -15,6 +15,7 @@ typedef struct hostent hostent;
 typedef struct servent servent;
 
 int connectTo(char* name, char* ip);
+int startListening(char* name);
 int sendTrame(Trame* trame, int socketDescriptor);
 Trame* receiveTrame(int socketDescriptor);
 int checkConnection(int socketDescriptor);

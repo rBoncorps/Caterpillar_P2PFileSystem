@@ -152,39 +152,10 @@ int main(){
 	int socket_descriptor,
 		 nouv_socket_descriptor,
 		 longueur_adresse_courante;
-
+	socket_descriptor = startListening("big-daddy");
+	
 	sockaddr_in adresse_locale, adresse_client_courant;
-	hostent* ptr_hote;
-	servent* ptr_service;
-	char machine[TAILLE_MAX_USERNAME+1];
-
-	gethostname(machine,TAILLE_MAX_USERNAME);
-
-	if((ptr_hote=gethostbyname(machine))==NULL){
-
-		perror("Erreur : impossible de trouver le serveur a partir de ce nom \n");
-		exit(1);
-	}
-
-	bcopy((char*)ptr_hote->h_addr,(char*)&adresse_locale.sin_addr,ptr_hote->h_length);
-	adresse_locale.sin_family = ptr_hote->h_addrtype;
-	adresse_locale.sin_addr.s_addr= INADDR_ANY;
-	adresse_locale.sin_port = htons(5001);
-
-	printf("Numero de port pour la connexion au serveur : %d   \n", ntohs(adresse_locale.sin_port));
-
-	if((socket_descriptor = socket(AF_INET , SOCK_STREAM, 0))<0){
-		perror("impossible de creer la socket de connexion avec le client .");
-		exit(1);
-	}
-
-	if((bind(socket_descriptor,(sockaddr*)(&adresse_locale),sizeof(adresse_locale)))<0){
-		perror("impossible de lier la socket à l'adresse de connexion avec le client .");
-		exit(1);
-	}
-
-	listen(socket_descriptor,5);
-
+	
 	for(;;){
 		longueur_adresse_courante = sizeof(adresse_client_courant);
 		if((nouv_socket_descriptor= accept(socket_descriptor,(sockaddr*)(&adresse_client_courant),&longueur_adresse_courante))<0){

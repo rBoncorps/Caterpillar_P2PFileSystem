@@ -42,6 +42,49 @@ int connectTo(char* name, char* ip) {
 	return clientSocketDescriptor;
 }
 
+/*! \brief Try to open a listening connexion.
+	 \return The opened socket descriptor or -1 if an error occured.
+*/
+int startListening(char* name) {
+	int localSocketDescriptor;
+	hostent* localHost;
+	servent* localService;
+	sockaddr_in localAdress;
+	char machine[TAILLE_MAX_USERNAME+1];
+	gethostname(machine,TAILLE_MAX_USERNAME);
+	printf("[trame_utils::startListening] Host Name : %s\n",machine);
+	if((localHost=gethostbyname(machine))==NULL){
+		perror("[trame_utils::startListening] Impossible de lancer le serveur.\n");
+		return -1;
+	}
+	bcopy((char*)localHost->h_addr,(char*)&localAdress.sin_addr,localHost->h_length);
+	localAdress.sin_family = localHost->h_addrtype;
+	localAdress.sin_addr.s_addr= INADDR_ANY;
+	if(strcmp(name,"bob") == 0) {
+		localAdress.sin_port = htons(5002);
+		printf("[trame_utils::startListening] Port du contact : 5002.\n");
+	}
+	else if(strcmp(name,"alice") == 0) {
+		localAdress.sin_port = htons(5003);
+		printf("[trame_utils::startListening] Port du contact : 5003.\n");
+	}
+	else {
+		localAdress.sin_port = htons(5001);
+		printf("[trame_utils::startListening] Port du contact : 5001.\n");
+	}
+	
+	if((localSocketDescriptor = socket(AF_INET , SOCK_STREAM, 0))<0){
+		perror("[trame_utils::startListening] Impossible de creer la socket d'écoute.\n");
+		return -1;
+	}
+	if((bind(localSocketDescriptor,(sockaddr*)(&localAdress),sizeof(localAdress)))<0){
+		perror("[trame_utils::startListening] Impossible de lier le socket d'écoute.\n");
+		return -1;
+	}
+	listen(localSocketDescriptor,5);
+	return localSocketDescriptor;
+}
+
 /*! \brief Try to send Trame trame in the socketDescriptor.
     \return 0 if the trame has been sent, -1 if an error occured.
 */
