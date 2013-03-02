@@ -73,7 +73,7 @@ void* boucleReception() {
 	printf("listen serveur local lancé\n");
 	listen(socket_descriptor,5);
 	pthread_t handleTrame_th;
-	for(;;){
+	for(;;) {
 		longueur_adresse_courante = sizeof(adresse_client_courant);
 		if((nouveau_socket_descriptor= accept(socket_descriptor,(sockaddr*)(&adresse_client_courant),&longueur_adresse_courante))<0){
 			perror("impossible d'accepter la connexion.");
@@ -93,12 +93,9 @@ int main(int argc, char **argv)
 {
 	printf("hello %s\n",name);
 	int socket_descriptor,longueur;
-	sockaddr_in adresse_locale;
-	hostent *ptr_host;
-	servent *ptr_service;
-	
-	char buffer[TAILLE_MAX_TRAME];
 	char * host = "127.0.0.1";
+	
+	socket_descriptor = connectTo("big-daddy",host);
 	
 	mapAmi = newMatrice();
 	
@@ -109,73 +106,24 @@ int main(int argc, char **argv)
 	mesg[strlen(mesg)] = '\0';
 	
 	trame = creationTrame(name,CON_SERV,strlen(mesg),1,1,mesg);
+	int sent = sendTrame(trame, socket_descriptor);
 	
 	printf("Bienvenue dans Caterpillar p2p file system !\n");
 	
-	if((ptr_host = gethostbyname(host)) == NULL)
-	{
-		perror("erreur : impossible de trouver le serveur vérifiez votre connexion.");
-		exit(1);
-	}
-
-	bcopy((char*)ptr_host->h_addr, (char*)&adresse_locale.sin_addr, ptr_host->h_length);
-	adresse_locale.sin_family = AF_INET;
-
-	/*if((ptr_service = getservbyname("irc","tcp")) == NULL)
-	{
-		perror("erreur : impossible de récuperer le numero de port du service desire.");
-		exit(1);
-	}	
-	adresse_locale.sin_port = htons(ptr_service->s_port);
-	*/
-	
-	adresse_locale.sin_port = htons(5001);
-
-	printf("numero de port pour la connexion au serveur : %d \n", ntohs(adresse_locale.sin_port));
-
-	if((socket_descriptor = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	{
-		perror("erreur : impossible de creer la socket de connexion avec le serveur.");
-		exit(1);
-	}
-
-	if((connect(socket_descriptor, (sockaddr*)(&adresse_locale), sizeof(adresse_locale))) < 0)
-	{
-		perror("erreur : impossible de se connecter au serveur.");
-		exit(1);
-	}
-
-	printf("Connexion établie avec le seveur. \n");
-
-	printf("Authentification... \n");
-
-	if((write(socket_descriptor, (char*)trame, TAILLE_MAX_TRAME))<0)
-	{
-		perror("erreur : impossible d'ecrire le message destine au serveur.");
-		exit(1);
-	}
-
-	printf("message envoye au serveur. \n");
-
-	if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0)
-	{
-		printf("reponse du serveur : \n");
-		Trame* revert = (Trame*)&buffer;
-		if(revert->typeTrame == ACK_CON) {
-			printf("Recu aquittement de connexion.\n");
-		}
+	Trame* ackTrame = receiveTrame(socket_descriptor);
+	if(ackTrame->typeTrame == ACK_CON) {
+		printf("Recu un aquittement de connexion.\n");
 	}
 	
-	// launch the thread handeling messages
-	// passer le socket_descriptor direct ? peut être un nouveau socket descriptor
-	// ou simplement faire un read comme précédemment
+	// Launch the thread handeling incoming messages
 	pthread_t boucle_reception;
 	if(pthread_create(&boucle_reception, NULL, boucleReception, NULL)) {
-		perror("Trop de threads hihihihi");
+		perror("Impossible de créer un nouveau thread.\n");
 		return 1;
 	}
 	
-	// main loop for the client
+	// User main loop. Contains the command interpreter and call
+	// related actions.
 	char* action = malloc(100*sizeof(char));
 	while(strcmp(action,"exit") != 0) {
 		printf("Enter a command or type help\n");

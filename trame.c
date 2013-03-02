@@ -5,7 +5,6 @@ typedef struct Trame Trame;
 Trame* creationTrame(char* fromName, TypeTrame type,int taille,int numTrame,int nbTrame, char* dataT) {
 	Trame* trame;
 	trame = malloc(sizeof(Trame));
-	printf("sizeof trame : %ld\n",sizeof(Trame));
 	trame->typeTrame = type;
 	trame->numTrame = 1;
 	trame->nbTrames = 1;

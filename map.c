@@ -90,19 +90,14 @@ int ajouterClient(Matrice* map, char* name, char* ip) {
 	Pair *tmp_pairs, *pair;
 	char *tmp_ip;
 	char *new_name, *new_ip;
-	//printf("coucou\n");
 	if (map == NULL) {
 		return 0;
 	}
 	if(name == NULL || ip == NULL) {
 		return 0;
 	}
-	//printf("pouetpouet\n");
 	name_len = strlen(name);
-	//printf("bim\n");
 	ip_len = strlen(ip);
-	//printf("paf\n");
-	//printf("strlen(name) = %u\nstrlen(ip) = %u\n",name_len,ip_len);
 	
 	new_name = malloc((name_len + 1) * sizeof(char));
 	if (new_name == NULL) {
@@ -121,7 +116,6 @@ int ajouterClient(Matrice* map, char* name, char* ip) {
 			free(new_ip);
 			return 0;
 		}
-		printf("%x\n",map->pairs);
 		map->size = 1;
 	}
 	else {
@@ -145,23 +139,12 @@ int ajouterClient(Matrice* map, char* name, char* ip) {
 			}
 		}
 		else {
-			printf("la\n");
-			printf("%d\n",map->size);
-			printf("%x\n",map->pairs);
-			printf("sizeof char* : %d\n",sizeof(char*));
-			printf("sizeof pair : %d\n",sizeof(Pair));
-			printf("%d\n",((map->size) + 1) * sizeof(Pair));
-			printf("length of ip / name : %d / %d \n",strlen(name),strlen(ip));
 			tmp_pairs = (Pair*)realloc((map->pairs), ((map->size) + 1) * sizeof(Pair));
-			printf("pouet\n");
 			if (tmp_pairs == NULL) {
-				printf("bim\n");
 				free(new_name);
 				free(new_ip);
-				printf("boum\n");
 				return 0;
 			}
-			printf("icici\n");
 			map->pairs = tmp_pairs;
 			map->size++;
 		}
@@ -187,27 +170,3 @@ void afficherMap(Matrice* map) {
 		i++;
 	}
 }
-/*
-int main(int argc, char* argv[]) {
-
-Matrice* map = newMatrice();
-printf("nouvelle matrice créée\n");
-
-ajouterClient(map,"bob","127.0.0.1");
-ajouterClient(map,"lolilol","127.0.0.1");
-
-afficherMap(map);
-
-ajouterClient(map,"bob","157.5.20.0");
-
-afficherMap(map);
-
-deleteMatrice(map);
-printf("matrice delete\n");
-
-printf("essai : %d", map->size);
-return 0;
-
-
-}
-*/
