@@ -108,7 +108,7 @@ void* receptionTrame(void* sock) {
 			char* ip = getIP(mapIP,name);
 			if(ip == NULL) {
 				char errorMessage[2000];
-				strcpy(errorMessage,"Error : the server doesn't know \0");
+				strcpy(errorMessage,"Error : le serveur ne connait pas \0");
 				strcat(errorMessage, name);
 				strcat(errorMessage, ".\0");
 				printf("%s\n",errorMessage);
@@ -120,15 +120,34 @@ void* receptionTrame(void* sock) {
 			if(sd >= 0) {
 				int isConnected = checkConnection(sd);
 				if(isConnected == 0) {
+					char* response = (char*)malloc(sizeof(char) * (strlen(ip) + strlen(name) + 2));
+					strcpy(response,name);
+					strcat(response,":\0");
+					strcat(response,ip);
+					strcat(response,"\0");
+					Trame* ackTrame = creationTrame("big-daddy",ACK,strlen(response),1,1,response);
+					int sent = sendTrame(ackTrame,nouveau_socket_descriptor);
 					printf("connected !\n");
 				}
 				else {
-					
-					//Trame* errorTrame = creationTrame("big-daddy",ERROR, 
+					char errorMessage[2000];
+					strcpy(errorMessage,"Error : \0");
+					strcat(errorMessage, name);
+					strcat(errorMessage, " n'est pas connecté.\0");
+					printf("%s\n",errorMessage);
+					Trame* errorTrame = creationTrame("big-daddy", ERROR, strlen(errorMessage), 1, 1, errorMessage);
+					int sent = sendTrame(errorTrame, nouveau_socket_descriptor);
 					printf("pas connecté 8DDDDDD\n");
 				}
 			}
 			else {
+				char errorMessage[2000];
+				strcpy(errorMessage,"Error : \0");
+				strcat(errorMessage, name);
+				strcat(errorMessage, " n'est pas connecté.\0");
+				printf("%s\n",errorMessage);
+				Trame* errorTrame = creationTrame("big-daddy", ERROR, strlen(errorMessage), 1, 1, errorMessage);
+				int sent = sendTrame(errorTrame, nouveau_socket_descriptor);
 				printf("vraiment pas connecté\n");
 			}	
 		}

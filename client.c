@@ -7,9 +7,10 @@
 #include "map.h"
 #include "trame.h"
 #include "trame_utils.h"
+#include "common.h"
 
-#define PORT_SERVEUR_LOCAL 5002
-//#define PORT_SERVEUR_LOCAL 5003
+//#define PORT_SERVEUR_LOCAL 5002
+#define PORT_SERVEUR_LOCAL 5003
 
 typedef struct sockaddr sockaddr;
 typedef struct sockaddr_in sockaddr_in;
@@ -20,10 +21,10 @@ Matrice* mapAmi;
 Trame* trame;
 
 // test bob = 5002, alice = 5003
-char* name = "bob\0";
-char* ip = "127.0.0.1\0";
-//char* name = "alice\0";
+//char* name = "bob\0";
 //char* ip = "127.0.0.1\0";
+char* name = "alice\0";
+char* ip = "127.0.0.1\0";
 
 void* handleTrame(void* sock) {
 	printf("in handle trame\n");
@@ -109,7 +110,8 @@ int main(int argc, char **argv)
         }
 		char* actionName = malloc(100*sizeof(char));
 		char* parameter = malloc(100*sizeof(char));
-		sscanf(action,"%s %s",actionName, parameter);
+		char* parameter2 = malloc(100*sizeof(char));
+		sscanf(action,"%s %s %s",actionName, parameter, parameter2);
 		
 		if(strcmp(actionName,"add_friend") == 0) {
 			printf("want to add %s as a friend\n",parameter);
@@ -119,24 +121,23 @@ int main(int argc, char **argv)
 			if(response->typeTrame == ERROR) {
 				printf("%s\n",response->data);
 			}
-		}
-		
-		
-		if(strcmp(actionName,"testMulti") == 0) {
-			printf("want to test multiTrame\n");
-			char* mesg = "Mais cette capacité ne se maîtrise pas sans efforts. Il est necessaire d'avoir des connaissances et des compétences acquise tout au long de sa carrière. A commencer par la formation. A l'université de Nantes, le master ALMA orienté génie logiciel prône la gestion collaborative de projet. Ceci nous apprend à travailler en équipe tout au long de l'année pour réaliser des projets sur des sujets techniques les plus variés. Cette méthode de travail renforce la capacité d'organisation et de rigueur ainsi que la capacité d'adaptation.C'est un cursus qui responsabilise ses élèves en les projetant dans le monde du travail, les poussant a prendre des initiatives.	Ensuite viens l'expérience, avec une vraie confrontation à l'entreprise. Lors du stage de fin d'étude de Licence en informatique, j'ai eu l'occasion d'être intergré dans un processus de développement logiciel. Rejoindre une équipe nécessite d'avoir un tempérament social et parfois même médiateur en cas de conflits. Une volonté d'intéragir avec les membres du groupe et de dissiper les tensions.\0";
-			//mesg[strlen(mesg)] = '\0';
-			//printf("texte a envoyer : %s , longueur %ld\n",mesg,strlen(mesg));
-			int nbTrames;
-			Trame** tramesMesg = decoupageTrame(name,ENV_FIC,strlen(mesg), mesg,&nbTrames); 
-			int i = 0;
-			for(i ; i < nbTrames ; i++) {
-				printf("trame %d envoye\n : data -> %s\n",i,tramesMesg[i]->data);
-				int retValue = sendTrame(tramesMesg[i],socket_descriptor);
-				sleep(2);
+			else if(response->typeTrame == ACK) {
+				char* responseName;
+				char* responseIP;
+				printf("responseName : %s\n",responseName);
+				printf("responseIP : %s\n",responseIP);
+				//responseName[strlen(responseName)] = '\0';
+				//responseIP[strlen(responseIP)] = '\0';
+				extractNameIP(response->data,&responseName,&responseIP);
+				printf("ACK for DEM_AMI. %s has the adress %s\n",responseName,responseIP);
+				ajouterClient(mapAmi,responseName, responseIP);
+				afficherMap(mapAmi);
 			}
-			
 		}
+		if(strcmp(actionName,"get_file") == 0) {
+			printf("want to get file %s from the friend %s\n",parameter2, parameter);
+		}
+
 		if(strcmp(actionName,"testFichier") == 0) {
 			printf("want to test file Trame\n");
 			FILE* file = NULL;

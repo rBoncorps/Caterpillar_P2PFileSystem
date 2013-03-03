@@ -1,6 +1,7 @@
 #include "common.h"
 
 int extractNameIP(char* from, char** p_name, char** p_ip) {
+	printf("in extractNameIP\n");
 	char* name;
 	char* ip;
 	name = malloc((MAX_NAME_SIZE+1)*sizeof(char));
