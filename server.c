@@ -156,7 +156,25 @@ void* receptionTrame(void* sock) {
 }
 
 int main(){
+	
+	/*char* ls = (char*)malloc(6*sizeof(char));
+	strcpy(ls,"ls\0");
+	strcat(ls," -a\0"); 
+	printf("%s\n",ls);
+	system(ls);*/
+	
+	FILE* test;
+	char testB[200];
+	if ( (test = popen("ls -a", "r")) == NULL ) {  // ouverture
+		exit(1); 
+	}
+	
+	while ( fgets(testB, 200, test) != NULL ) { 
+		fputs(testB, stdout);
+	}  
 
+	pclose(test); // fermeture
+	
 	pthread_t nouveau_client;
 
 	//creation de la matrice contenant les noms et ip des personnes connectées

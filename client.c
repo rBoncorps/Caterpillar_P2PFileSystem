@@ -184,28 +184,33 @@ int main(int argc, char **argv)
 			int tailleFichier = 0;
 			if(contactResponse->nbTrames > 1) {
 				FILE* file = NULL;
-				char* filePath = "FichierB/pouetpouet.pdf"; // for debugging
+				char* filePath = "FichierB/tagada.pdf"; // for debugging
 				file = fopen(filePath, "w");
 				int nbWaitedTrames = contactResponse->nbTrames;
 				int nbReceivedTrames = 0;
-				Trame** tabTrames = malloc(nbWaitedTrames*sizeof(Trame*));
-				tabTrames[nbReceivedTrames] = contactResponse;
-				tailleFichier += contactResponse->taille;
+				Trame* currentTrame = contactResponse;
+				//Trame** tabTrames = malloc(nbWaitedTrames*sizeof(Trame*));
+				//tabTrames[nbReceivedTrames] = contactResponse;
+				tailleFichier += currentTrame->taille;
+				fwrite(currentTrame->data,sizeof(char),currentTrame->taille,file);
 				//fwrite(revert->data,sizeof * revert->data,revert->taille,file1);
 				nbReceivedTrames++;
 				int exitWaitingLoop = 0;
 				while (exitWaitingLoop == 0) {
 					printf("recue %d\n",nbReceivedTrames);
-					Trame* trame = receiveTrame(contactSocket);
+					//Trame* trame = receiveTrame(contactSocket);
+					currentTrame = receiveTrame(contactSocket);
 					//check if the received trame was the one we were waiting for
-					if(trame->numTrame != (nbReceivedTrames + 1)) {
+					if(currentTrame->numTrame != (nbReceivedTrames + 1)) {
+					//if(trame->numTrame != (nbReceivedTrames + 1)) {
 						//wrong trame received
 						printf("wrong number received\n");
 						sleep(5);
 					}
 					else{
-						tabTrames[nbReceivedTrames] = trame;
-						//fwrite(trame->data,sizeof(char),trame->taille,file1);
+						//tabTrames[nbReceivedTrames] = trame;
+						fwrite(currentTrame->data,sizeof(char),currentTrame->taille,file);
+						//tailleFichier += trame->taille;
 						tailleFichier += trame->taille;
 						nbReceivedTrames++;
 						if(nbReceivedTrames == nbWaitedTrames) {
@@ -214,8 +219,9 @@ int main(int argc, char **argv)
 					
 					}
 				}
+				fclose(file);
 			
-				char* mesg = extractMessage(tabTrames,nbWaitedTrames);
+				/*char* mesg = extractMessage(tabTrames,nbWaitedTrames);
 				//printf("message : %s\n",mesg);
 				printf("taille totale : %d\n",tailleFichier);
 				if (file != NULL) {
@@ -225,7 +231,7 @@ int main(int argc, char **argv)
 				}
 				else {
 					printf("error opening");
-				}
+				}*/
 			}
 		}
 
