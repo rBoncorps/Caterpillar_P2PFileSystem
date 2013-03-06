@@ -18,10 +18,10 @@ Matrice* mapAmi;
 Trame* trame;
 
 // test bob = 5002, alice = 5003
-//char* name = "bob\0";
-//char* ip = "127.0.0.1\0";
-char* name = "alice\0";
+char* name = "bob\0";
 char* ip = "127.0.0.1\0";
+//char* name = "alice\0";
+//char* ip = "127.0.0.1\0";
 
 void* handleTrame(void* sock) {
 	printf("in handle trame\n");
@@ -74,6 +74,47 @@ void* handleTrame(void* sock) {
 				sleep(2);
 			}
 		}
+	}
+	else if(received->typeTrame == CMD_CON) {
+		printf("Received a CMD_CON trame type\n");
+		FILE* test;
+		char testB[200];
+		char homePath[200];
+		if ( (test = popen("echo $HOME", "r")) == NULL ) {  // ouverture
+			exit(1); 
+		}
+
+		while ( fgets(testB, 200, test) != NULL ) { 
+			//fputs(testB, stdout);
+			strcpy(homePath,testB);
+		}  
+		pclose(test); // fermeture		
+		Trame* homePathTrame = creationTrame(name,CMD_HOME,strlen(homePath),1,1,homePath);
+		int sent = sendTrame(homePathTrame,socketDescriptor);
+	}
+	
+	else if (received->typeTrame == CMD) {
+		char* cmdData = malloc(received->taille * sizeof(char));
+		strcpy(cmdData,received->data);
+		int i = 0;
+		char* cmdType = malloc(4 * sizeof(char));
+		//extract command type
+		while(cmdData[i] != ' ') {
+			cmdType[i] = cmdData[i];
+			i++;
+		}
+		cmdType[i] = '\0';
+		FILE* test;
+		char testB[200];
+		if ( (test = popen("ls -a", "r")) == NULL ) {  // ouverture
+			exit(1); 
+		}
+	
+		while ( fgets(testB, 200, test) != NULL ) { 
+			fputs(testB, stdout);
+		}  
+
+		pclose(test); // fermeture
 	}
 	printf("side client trame recue\n");
 }
@@ -232,6 +273,65 @@ int main(int argc, char **argv)
 				else {
 					printf("error opening");
 				}*/
+			}
+		}
+		
+		if(strcmp(actionName,"cmd") == 0) {
+			printf("You entered commande mode. allowed command : cd|ls\n");
+			char* contactName = parameter;
+			char* contactIP = getIP(mapAmi,contactName);
+			char* currentPath = malloc(140 * sizeof(char));
+			if(contactIP == NULL) {
+				printf("Le contact %s n'est pas dans votre liste d'amis, veuillez-utiliser <add_friend %s>\n",parameter,parameter);
+				continue;
+			}
+			int contactSocket = connectTo(contactName, contactIP);
+			//home path on distant client
+			trame = creationTrame(name,CMD_CON,0,1,1,"");
+			int sent = sendTrame(trame, contactSocket);
+			Trame* homePathTrame = receiveTrame(contactSocket);
+			if(homePathTrame->typeTrame == ERROR) {
+				printf("%s\n",homePathTrame->data);
+				continue;
+			}
+			strncpy(currentPath,homePathTrame->data,homePathTrame->taille);
+			printf("current path on distant client : %s\n",currentPath);
+			int exitCmdMode = 0;
+			while(exitCmdMode == 0) {
+				printf("    > ");
+				char* command = malloc(100*sizeof(char));
+				fgets(command,150,stdin);
+				if ((strlen(command)>0) && (command[strlen (command) - 1] == '\n')) {
+					command[strlen (command) - 1] = '\0';
+				}
+				char* commandName = malloc(10*sizeof(char));
+				char* cmdParameter = malloc(140*sizeof(char));
+				sscanf(command,"%s %s",commandName,cmdParameter);
+				if (strcmp(command,"exit") == 0) {
+					exitCmdMode = 1;	
+				}
+				else {
+					
+					if (strcmp(command,"cd") == 0) {
+						Trame* cmdTrame = creationTrame(name,CMD,strlen(command),1,1,command);
+						int sent = sendTrame(cmdTrame,contactSocket);
+						Trame* contactResponse = receiveTrame(contactSocket);
+						if(contactResponse->typeTrame == ERROR) {
+							printf("%s\n",contactResponse->data);
+							continue;
+						}
+					
+					}
+					if (strcmp(command,"ls") == 0) {
+						Trame* cmdTrame = creationTrame(name,CMD,strlen(commandName),1,1,commandName);
+						int sent = sendTrame(cmdTrame,contactSocket);
+						Trame* contactResponse = receiveTrame(contactSocket);
+						if(contactResponse->typeTrame == ERROR) {
+							printf("%s\n",contactResponse->data);
+							continue;
+						}
+					}
+				}
 			}
 		}
 

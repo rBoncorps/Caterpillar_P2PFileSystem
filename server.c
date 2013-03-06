@@ -151,7 +151,6 @@ void* receptionTrame(void* sock) {
 				printf("vraiment pas connecté\n");
 			}	
 		}
-		
 	}
 }
 
