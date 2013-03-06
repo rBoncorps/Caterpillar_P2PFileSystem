@@ -18,10 +18,10 @@ Matrice* mapAmi;
 Trame* trame;
 
 // test bob = 5002, alice = 5003
-//char* name = "bob\0";
-//char* ip = "127.0.0.1\0";
-char* name = "alice\0";
+char* name = "bob\0";
 char* ip = "127.0.0.1\0";
+//char* name = "alice\0";
+//char* ip = "127.0.0.1\0";
 
 void* handleTrame(void* sock) {
 	printf("in handle trame\n");
@@ -37,6 +37,49 @@ void* handleTrame(void* sock) {
 		Trame* ackCheckConTrame = creationTrame(name,ACK_CON,0,1,1,"");
 		printf("writed namesrc : %s\n",name);
 		sendTrame(ackCheckConTrame,socketDescriptor);
+	}
+	else if(received->typeTrame == ENV_FIC) {
+		// put cmd
+		int tailleFichier = 0;
+		if(received->nbTrames > 1) {
+			FILE* file = NULL;
+			char* filePath = "FichierB/zobizobizbozi.pdf"; // for debugging
+			file = fopen(filePath, "w");
+			int nbWaitedTrames = received->nbTrames;
+			int nbReceivedTrames = 0;
+			Trame* currentTrame = received;
+			//Trame** tabTrames = malloc(nbWaitedTrames*sizeof(Trame*));
+			//tabTrames[nbReceivedTrames] = contactResponse;
+			tailleFichier += currentTrame->taille;
+			fwrite(currentTrame->data,sizeof(char),currentTrame->taille,file);
+			//fwrite(revert->data,sizeof * revert->data,revert->taille,file1);
+			nbReceivedTrames++;
+			int exitWaitingLoop = 0;
+			while (exitWaitingLoop == 0) {
+				printf("recue %d\n",nbReceivedTrames);
+				//Trame* trame = receiveTrame(contactSocket);
+				currentTrame = receiveTrame(socketDescriptor);
+				//check if the received trame was the one we were waiting for
+				if(currentTrame->numTrame != (nbReceivedTrames + 1)) {
+				//if(trame->numTrame != (nbReceivedTrames + 1)) {
+					//wrong trame received
+					printf("wrong number received\n");
+					sleep(5);
+				}
+				else{
+					//tabTrames[nbReceivedTrames] = trame;
+					fwrite(currentTrame->data,sizeof(char),currentTrame->taille,file);
+					//tailleFichier += trame->taille;
+					tailleFichier += trame->taille;
+					nbReceivedTrames++;
+					if(nbReceivedTrames == nbWaitedTrames) {
+						exitWaitingLoop = 1;
+					}
+	
+				}
+			}
+			fclose(file);
+		}
 	}
 	else if(received->typeTrame == CMD_CON) {
 		printf("Received a CMD_CON trame type\n");
@@ -360,6 +403,44 @@ int main(int argc, char **argv)
 							fclose(file);
 						}
 					}
+					if(strcmp(commandName,"put_file") == 0) {
+						FILE* file = NULL;
+						//printf("Try to open %s file\n",received->data);
+						//printf("Try to open %s file\n",received->data);
+						//file = fopen(received->data, "r");
+						file = fopen("FichierA/Spec_Communication.pdf","r");
+						if(file == NULL) {
+							char errorMessage[2000];
+							strcpy(errorMessage,"Erreur : impossible d'ouvrir le fichier \0");
+							strcat(errorMessage, cmdParameter);
+							//strcat(errorMessage, cmdParam);
+							strcat(errorMessage, ".\0");
+							printf("%s\n",errorMessage);
+							//Trame* errorTrame = creationTrame(name,ERROR,strlen(errorMessage),1,1,errorMessage);
+							//int sent = sendTrame(errorTrame,socketDescriptor);
+						}
+						else {
+							// here is the core of the application
+							int pos = fseek(file,0,SEEK_END);
+							int size = ftell(file);
+							rewind(file);
+							char* buffer = malloc((size) * sizeof(char));
+							printf("size : %d\n",size);
+							int longLu = 0;
+							longLu = fread( buffer , sizeof(char) , size , file );
+							sleep(2);
+							fclose(file);
+							int nbTrames;
+							sleep(2);
+							Trame** tramesMesg = decoupageTrame(name,ENV_FIC,size, buffer,&nbTrames); 
+							int i = 0;
+							printf("nbTrames : %d\n",nbTrames);
+							for(i ; i < nbTrames ; i++) {
+								int retValue = sendTrame(tramesMesg[i],contactSocket);
+								sleep(2);
+							}
+						}
+					}	
 				}
 			}
 		}
