@@ -18,10 +18,8 @@ Matrice* mapAmi;
 Trame* trame;
 
 // test bob = 5002, alice = 5003
-char* name = "bob\0";
-char* ip = "127.0.0.1\0";
-//char* name = "alice\0";
-//char* ip = "127.0.0.1\0";
+char* name = "bob\0";char* ip = "127.0.0.1\0";
+//char* name = "alice\0";char* ip = "127.0.0.1\0";
 
 void* handleTrame(void* sock) {
 	printf("in handle trame\n");
@@ -94,11 +92,23 @@ void* handleTrame(void* sock) {
 			//fputs(testB, stdout);
 			strcpy(homePath,testB);
 		}  
-		pclose(test); // fermeture		
+		pclose(test); // fermeture	
+		int i = 0;
+		while(homePath[i] != '\n') {
+			i++;
+		}
+		homePath[i] = '\0';
+		strcat(homePath,"/");
+		printf("homePath : %s|\n",homePath);	
 		Trame* homePathTrame = creationTrame(name,CMD_HOME,strlen(homePath),1,1,homePath);
 		int sent = sendTrame(homePathTrame,socketDescriptor);
+		if ( (test = popen("cd", "r")) == NULL ) {  // ouverture
+			exit(1); 
+		}
 		
 		int exitCmdMode = 0;
+		char* currentPath = malloc(200*sizeof(char));
+		strcpy(currentPath,homePath);
 		while(!exitCmdMode) {
 			received = receiveTrame(socketDescriptor);
 	
@@ -124,6 +134,68 @@ void* handleTrame(void* sock) {
 					j++;
 				}
 				cmdParam[j] = '\0';
+				if(strcmp(cmdType,"cd") == 0) {
+					FILE* test;
+					char testB[200];
+					char cdReturn[200];
+					printf("cmdData :%s\n",cmdData);
+					printf("homePath:%s\n",homePath);
+					printf("cmdParam:%s\n",cmdParam);
+					char* realPath = malloc((strlen(homePath)+strlen(cmdParam))*sizeof(char));
+					strcpy(realPath,homePath);
+					strcat(realPath,cmdParam);
+					printf("realPath : %s\n",realPath);
+					char command[200];
+					strcpy(command,cmdType);
+					strcat(command," ");
+					strcat(command,realPath);
+					printf("command : %s\n",command);
+					if ( (test = popen(command, "r")) == NULL ) {  // ouverture
+						exit(1); 
+					}
+
+					while ( fgets(testB, 200, test) != NULL ) { 
+						//fputs(testB, stdout);
+						strcpy(cdReturn,testB);
+					}  
+					pclose(test); // fermeture	
+					printf("return of cd : %s\n",cdReturn);
+					//cd worked
+					strcpy(currentPath,realPath);
+					printf("current Path : %s\n",currentPath);
+					Trame* cdTrame = creationTrame(name,CD_RET,1,1,1,"1");
+					int sent = sendTrame(cdTrame,socketDescriptor);
+					
+				}
+				else if (strcmp(cmdType,"ls") == 0) {
+					FILE* test;
+					char testB[200];
+					char* lsReturn = malloc(1*sizeof(char));
+					char command[200];
+					strcat(command,cmdType);
+					strcat(command," ");
+					strcat(command,currentPath);
+					if ( (test = popen(command, "r")) == NULL ) {  // ouverture
+						exit(1); 
+					}
+
+					while ( fgets(testB, 200, test) != NULL ) { 
+						//fputs(testB, stdout);
+						lsReturn = (char*)realloc(lsReturn,(strlen(lsReturn)+200)*sizeof(char));
+						strcat(lsReturn,testB);
+					}  
+					pclose(test); // fermeture	
+					printf("return of the ls : %s\n",lsReturn);
+					printf("sending ls result\n");
+					int nbTrames;
+					Trame** tramesMesg = decoupageTrame(name,LS_RET,strlen(lsReturn), lsReturn,&nbTrames); 
+					int i = 0;
+					printf("nbTrames : %d\n",nbTrames);
+					for(i ; i < nbTrames ; i++) {
+						int retValue = sendTrame(tramesMesg[i],socketDescriptor);
+						sleep(2);
+					}
+				}
 
 		
 		
@@ -148,8 +220,12 @@ void* handleTrame(void* sock) {
 				FILE* file = NULL;
 				//printf("Try to open %s file\n",received->data);
 				printf("Try to open %s file\n",received->data);
+				char* filePath = malloc((strlen(currentPath)+received->taille)*sizeof(char));
+				strcpy(filePath,currentPath);
+				strcat(filePath,received->data);
 				//file = fopen(received->data, "r");
-				file = fopen("FichierA/Spec_Communication.pdf","r");
+				//file = fopen("FichierA/Spec_Communication.pdf","r");
+				file = fopen(filePath,"r");
 				if(file == NULL) {
 					char errorMessage[2000];
 					strcpy(errorMessage,"Erreur : impossible d'ouvrir le fichier \0");
@@ -214,13 +290,16 @@ void* boucleReception() {
 
 
 int main(int argc, char **argv)
-{
+{	
+	printf("Bienvenue dans Caterpillar p2p file system !\n");
 	printf("hello %s\n",name);
 	int socket_descriptor,longueur;
 	char * host = "127.0.0.1";
 	
+	//creation socket to dialog with server
 	socket_descriptor = connectTo("big-daddy",host);
 	
+	//map containing friend of the client
 	mapAmi = newMatrice();
 	
 	char* mesg = malloc(strlen(name) + 1 + strlen(ip) + 1);
@@ -229,10 +308,9 @@ int main(int argc, char **argv)
 	strcat(mesg,ip);
 	mesg[strlen(mesg)] = '\0';
 	
+	//sending trame to connect to the server
 	trame = creationTrame(name,CON_SERV,strlen(mesg),1,1,mesg);
 	int sent = sendTrame(trame, socket_descriptor);
-	
-	printf("Bienvenue dans Caterpillar p2p file system !\n");
 	
 	Trame* ackTrame = receiveTrame(socket_descriptor);
 	if(ackTrame->typeTrame == ACK_CON) {
@@ -261,10 +339,14 @@ int main(int argc, char **argv)
 		sscanf(action,"%s %s %s",actionName, parameter, parameter2);
 		
 		if(strcmp(actionName,"add_friend") == 0) {
-			printf("want to add %s as a friend\n",parameter);
+			//procedure to get the ip of the person to add it to your friend list
+			//so you can echange with him
+			printf("\twant to add %s as a friend\n",parameter);
 			trame = creationTrame(name,DEM_AMI,strlen(parameter),1,1,parameter);
 			int sent = sendTrame(trame, socket_descriptor);
+			printf("apres envoi\n");
 			Trame* response = receiveTrame(socket_descriptor);
+			printf("apres reception\n");
 			if(response->typeTrame == ERROR) {
 				printf("%s\n",response->data);
 			}
@@ -316,7 +398,6 @@ int main(int argc, char **argv)
 				char* commandName = malloc(10*sizeof(char));
 				char* cmdParameter = malloc(140*sizeof(char));
 				sscanf(command,"%s %s",commandName,cmdParameter);
-				printf("%s\n",commandName);
 				if (strcmp(commandName,"exit") == 0) {
 					exitCmdMode = 1;	
 					Trame* cmdTrame = creationTrame(name,CMD_END,0,1,1,"");
@@ -336,7 +417,11 @@ int main(int argc, char **argv)
 					}
 					if (strcmp(commandName,"ls") == 0) {
 						printf("test\n");
-						Trame* cmdTrame = creationTrame(name,CMD,strlen(commandName),1,1,commandName);
+						char* msg = malloc(strlen(commandName) + 2);
+						strcat(msg,commandName);
+						strcat(msg, " ");
+						msg[strlen(msg)] = '\0';						
+						Trame* cmdTrame = creationTrame(name,CMD,strlen(msg),1,1,msg);
 						int sent = sendTrame(cmdTrame,contactSocket);
 						printf("sent\n");
 						Trame* contactResponse = receiveTrame(contactSocket);
@@ -344,6 +429,21 @@ int main(int argc, char **argv)
 							printf("%s\n",contactResponse->data);
 							continue;
 						}
+						char* lsPrint = malloc(contactResponse->taille*sizeof(char));
+						strncpy(lsPrint,contactResponse->data,contactResponse->taille);
+						if(contactResponse->nbTrames > 1) {
+							int nbWaitedTrames = contactResponse->nbTrames;
+							int nbReceivedTrames = 1;
+							Trame* contactTrame;
+							while (nbReceivedTrames < nbWaitedTrames) {
+								contactTrame = receiveTrame(contactSocket);
+								nbReceivedTrames++;
+								lsPrint = (char*)realloc(lsPrint,(strlen(lsPrint)+contactTrame->taille)*sizeof(char));
+								strncat(lsPrint,contactTrame->data,contactTrame->taille);
+							}
+							
+						}
+						printf("ls received : %s\n",lsPrint);
 					}
 					if(strcmp(commandName,"get_file") == 0) {
 						/*char* contactIP = getIP(mapAmi,parameter);
