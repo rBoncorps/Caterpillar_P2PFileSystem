@@ -98,8 +98,8 @@ void* handleTrame(void* sock) {
 					printf("cmdData :%s\n",cmdData);
 					printf("homePath:%s\n",homePath);
 					printf("cmdParam:%s\n",cmdParam);
-					char* realPath = malloc((strlen(homePath)+strlen(cmdParam))*sizeof(char));
-					strcpy(realPath,homePath);
+					char* realPath = malloc((strlen(currentPath)+strlen(cmdParam))*sizeof(char));
+					strcpy(realPath,currentPath);
 					strcat(realPath,cmdParam);
 					printf("realPath : %s\n",realPath);
 					char command[200];
@@ -129,9 +129,10 @@ void* handleTrame(void* sock) {
 					char testB[200];
 					char* lsReturn = malloc(1*sizeof(char));
 					char command[200];
-					strcat(command,cmdType);
+					strcpy(command,cmdType);
 					strcat(command," ");
 					strcat(command,currentPath);
+					printf("command : %s\n",command);
 					if ( (test = popen(command, "r")) == NULL ) {  // ouverture
 						exit(1); 
 					}
