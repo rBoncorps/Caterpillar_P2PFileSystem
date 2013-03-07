@@ -36,49 +36,6 @@ void* handleTrame(void* sock) {
 		printf("writed namesrc : %s\n",name);
 		sendTrame(ackCheckConTrame,socketDescriptor);
 	}
-	else if(received->typeTrame == ENV_FIC) {
-		// put cmd
-		int tailleFichier = 0;
-		if(received->nbTrames > 1) {
-			FILE* file = NULL;
-			char* filePath = "FichierB/zobizobizbozi.pdf"; // for debugging
-			file = fopen(filePath, "w");
-			int nbWaitedTrames = received->nbTrames;
-			int nbReceivedTrames = 0;
-			Trame* currentTrame = received;
-			//Trame** tabTrames = malloc(nbWaitedTrames*sizeof(Trame*));
-			//tabTrames[nbReceivedTrames] = contactResponse;
-			tailleFichier += currentTrame->taille;
-			fwrite(currentTrame->data,sizeof(char),currentTrame->taille,file);
-			//fwrite(revert->data,sizeof * revert->data,revert->taille,file1);
-			nbReceivedTrames++;
-			int exitWaitingLoop = 0;
-			while (exitWaitingLoop == 0) {
-				printf("recue %d\n",nbReceivedTrames);
-				//Trame* trame = receiveTrame(contactSocket);
-				currentTrame = receiveTrame(socketDescriptor);
-				//check if the received trame was the one we were waiting for
-				if(currentTrame->numTrame != (nbReceivedTrames + 1)) {
-				//if(trame->numTrame != (nbReceivedTrames + 1)) {
-					//wrong trame received
-					printf("wrong number received\n");
-					sleep(5);
-				}
-				else{
-					//tabTrames[nbReceivedTrames] = trame;
-					fwrite(currentTrame->data,sizeof(char),currentTrame->taille,file);
-					//tailleFichier += trame->taille;
-					tailleFichier += trame->taille;
-					nbReceivedTrames++;
-					if(nbReceivedTrames == nbWaitedTrames) {
-						exitWaitingLoop = 1;
-					}
-	
-				}
-			}
-			fclose(file);
-		}
-	}
 	else if(received->typeTrame == CMD_CON) {
 		printf("Received a CMD_CON trame type\n");
 		FILE* test;
@@ -256,6 +213,55 @@ void* handleTrame(void* sock) {
 						int retValue = sendTrame(tramesMesg[i],socketDescriptor);
 						sleep(2);
 					}
+				}
+			}
+			else if(received->typeTrame == ENV_FIC) {
+				printf("got env fic\n");
+				// put cmd
+				int tailleFichier = 0;
+				if(received->nbTrames > 1) {
+					FILE* file = NULL;
+					char* filePath = "FichierB/zobizobizbozi.pdf"; // for debugging
+					file = fopen(filePath, "w");
+					if(file == NULL) {
+						printf("null file ...\n");
+						return;
+					}
+					printf("pouetpouet\n");
+					int nbWaitedTrames = received->nbTrames;
+					int nbReceivedTrames = 0;
+					Trame* currentTrame = received;
+					//Trame** tabTrames = malloc(nbWaitedTrames*sizeof(Trame*));
+					//tabTrames[nbReceivedTrames] = contactResponse;
+					tailleFichier += currentTrame->taille;
+					fwrite(currentTrame->data,sizeof(char),currentTrame->taille,file);
+					//fwrite(revert->data,sizeof * revert->data,revert->taille,file1);
+					nbReceivedTrames++;
+					int exitWaitingLoop = 0;
+					while (exitWaitingLoop == 0) {
+						printf("recue %d\n",nbReceivedTrames);
+						//Trame* trame = receiveTrame(contactSocket);
+						currentTrame = receiveTrame(socketDescriptor);
+						//check if the received trame was the one we were waiting for
+						if(currentTrame->numTrame != (nbReceivedTrames + 1)) {
+						//if(trame->numTrame != (nbReceivedTrames + 1)) {
+							//wrong trame received
+							printf("wrong number received\n");
+							sleep(5);
+						}
+						else{
+							//tabTrames[nbReceivedTrames] = trame;
+							fwrite(currentTrame->data,sizeof(char),currentTrame->taille,file);
+							//tailleFichier += trame->taille;
+							tailleFichier += trame->taille;
+							nbReceivedTrames++;
+							if(nbReceivedTrames == nbWaitedTrames) {
+								exitWaitingLoop = 1;
+							}
+	
+						}
+					}
+					fclose(file);
 				}
 			}
 			else if(received->typeTrame == CMD_END) {
