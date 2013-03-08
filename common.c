@@ -1,3 +1,5 @@
+#pragma GCC diagnostic ignored "-fpermissive"
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 #include "common.h"
 
 int extractNameIP(char* from, char** p_name, char** p_ip) {

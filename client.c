@@ -1,5 +1,8 @@
+#pragma GCC diagnostic ignored "-fpermissive"
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 #include <linux/types.h>
 #include <sys/socket.h>
 #include <netdb.h>

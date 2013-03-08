@@ -1,3 +1,5 @@
+#pragma GCC diagnostic ignored "-fpermissive"
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 #include "trame.h"
 
 typedef struct Trame Trame;

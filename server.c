@@ -1,3 +1,5 @@
+#pragma GCC diagnostic ignored "-fpermissive"
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 #include <stdlib.h>
 #include <stdio.h>
 #include <linux/types.h>

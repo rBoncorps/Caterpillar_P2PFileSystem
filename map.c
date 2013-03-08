@@ -1,3 +1,5 @@
+#pragma GCC diagnostic ignored "-fpermissive"
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 #include <stdio.h>
 #include "map.h"
 
