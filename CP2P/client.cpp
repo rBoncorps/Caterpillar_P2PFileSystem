@@ -34,4 +34,13 @@ int main(int argc, char** argv) {
     if(ackTrame->getType() == ACK_CON) {
         cout  << "You are now connected to CP2P service." << endl;
     }
+
+	// Launch the thread handeling incoming messages
+	pthread_t handleMessage;
+	if(pthread_create(&handleMessage, NULL,handleTrame,NULL)) {
+		cout << "Cannot launch the listening local server." << endl;
+		return -1
+	}
+
+	ConsoleGUI* consoleGUI = new ConsoleGUI();
 }
