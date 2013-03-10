@@ -6,7 +6,7 @@
 // DEBUG
 #include <iostream>
 
-ServerReceiveHandler::ServerReceiveHandler(int socketDescriptor, MapIp* mapIp) : ReceiveHandler(socketDescriptor) {
+ServerReceiveHandler::ServerReceiveHandler(string name, int socketDescriptor, MapIp* mapIp) : ReceiveHandler(name,socketDescriptor) {
     mapIp_ = mapIp;
 }
 
@@ -24,7 +24,7 @@ void ServerReceiveHandler::launchReception() {
             string name;
             string ip;
             try {
-                extractNameIP(receivedTrame->getData(),name,ip);
+                receivedTrame->extractNameIP(name,ip);
             }catch(runtime_error& e) {
                 throw runtime_error(e.what());
             }
@@ -33,10 +33,11 @@ void ServerReceiveHandler::launchReception() {
                 throw runtime_error("Error during name or ip extraction.");
             }
             mapIp_->insert(std::pair<string,string>(name,ip));
+            cout << "[ReceiveHandler::launchReception] mapIp size : " << mapIp_->size() << endl;
             cout << "[ReceiveHandler::launchReception] Server map : " << endl;
             MapIp::iterator it;
-            for(it = mapIp_->begin(); it!=mapIp_->end(); it++) {
-                cout << it->first << " : " << it->second;
+            for(it = mapIp_->begin(); it!=mapIp_->end(); ++it) {
+                cout << it->first << " : " << it->second << endl;
             }
             Trame* ackTrame = new Trame("big-daddy",ACK_CON);
             socketManager_.sendTrame(ackTrame);

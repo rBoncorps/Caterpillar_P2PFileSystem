@@ -3,6 +3,7 @@
 
 #include "socketmanager.h"
 #include "common.h"
+#include <string>
 
 using namespace std;
 
@@ -15,12 +16,12 @@ using namespace std;
 class ReceiveHandler {
 
 public:
-    ReceiveHandler(int socketDescriptor);
+    ReceiveHandler(string name,int socketDescriptor);
     ~ReceiveHandler();
     virtual void launchReception() = 0;
 
 protected:
-    void extractNameIP(string from, string& name, string& ip);
+    string name_;
     SocketManager socketManager_;
 
 

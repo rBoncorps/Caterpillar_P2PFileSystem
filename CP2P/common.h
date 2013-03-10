@@ -9,6 +9,11 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#define MAX_USERNAME_SIZE 100
+#define MAX_DATA_SIZE 1000
+//#define MAX_TRAME_SIZE 4*sizeof(int) + MAX_DATA_SIZE + MAX_USERNAME_SIZE
+#define MAX_TRAME_SIZE 1132
+
 typedef struct sockaddr sockaddr;
 typedef struct sockaddr_in sockaddr_in;
 typedef struct hostent hostent;

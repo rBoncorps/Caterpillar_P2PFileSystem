@@ -111,7 +111,7 @@ void SocketManager::startListening(string name) {
     \exception A runtime_error is thrown if an error occured during the send process.
 */
 void SocketManager::sendTrame(Trame *trame) {
-    ostringstream oss;
+    /*ostringstream oss;
     oss << trame->getFrom();
     oss << '/';
     oss << trame->getType();
@@ -122,9 +122,22 @@ void SocketManager::sendTrame(Trame *trame) {
     oss << '/';
     oss <<trame->getNbTrame();
     oss << '/';
-    oss << trame->getData();
     string trameInfo = oss.str();
-    if(write(socketDescriptor_,trameInfo.c_str(),MAX_TRAME_SIZE) < 0) {
+    cout << endl;
+    cout << "size : " << trame->getSize() << endl;
+    cout << trameInfo;
+    for(int i = 0 ; i < trame->getSize(); i++) {
+        trameInfo += trame->getData().data()[i];
+    }
+    cout << "[SocketManager::sendTrame] sending " << endl;
+    //cout << trameInfo.data() << endl;
+    for(int i = 0; i < trame->getData().size();i++) {
+        cout << trame->getData().data()[i];
+    }*/
+    SerializableTrame* serializable = trame->getSerializableTrame();
+    //if(write(socketDescriptor_,trameInfo.c_str(),MAX_TRAME_SIZE) < 0) {
+    //if(write(socketDescriptor_,trameInfo.data(),MAX_TRAME_SIZE) < 0) {
+    if(write(socketDescriptor_,(char*)serializable,MAX_TRAME_SIZE) < 0) {
         cout << "[SocketManager::sendTrame] Cannot send the trame in the socket." << endl;
         throw runtime_error("Cannot send the trame in the socket.");
     }
@@ -144,13 +157,26 @@ Trame* SocketManager::receiveTrame() const {
         throw runtime_error("An error occured when during the read of the socket");
         return NULL;
     }
-    buffer[bufferSize] = '\0';
-    string receiveStream(buffer);
+    SerializableTrame* serializable = (SerializableTrame*)&buffer;
+    cout << "received Trame" << endl;
+    for(int i = 0; i < serializable->taille; i++) {
+        cout << serializable->data[i];
+    }
+    /*string receiveStream(buffer);
     vector<string> params;
     stringstream ss(receiveStream);
     string item;
     while(std::getline(ss, item, '/')) {
         params.push_back(item);
+    }
+    cout << "[SocketManager::receiveTrame] received trame splitted into " << params.size() << " parts" << endl;
+    for(int i = 0 ; i < params.size(); i++) {
+        cout << "single frag " << endl;
+        cout << params[i];
+        if(i > 5) {
+            params[5] += '/';
+            params[5] += params[i];
+        }
     }
     #pragma GCC diagnostic ignored "-fpermissive"
     Trame* trame;
@@ -161,6 +187,10 @@ Trame* SocketManager::receiveTrame() const {
         trame = new Trame(params[0],atoi(params[1].c_str()),atoi(params[2].c_str()),atoi(params[3].c_str()),atoi(params[4].c_str()));
     }
     #pragma GCC diagnostic warning "-fpermissive"
+    */
+    string test;
+    test.assign(serializable->data,serializable->taille);
+    Trame* trame = new Trame(serializable->nameSrc,serializable->typeTrame,serializable->taille,serializable->numTrame,serializable->nbTrames,test);
     return trame;
 }
 

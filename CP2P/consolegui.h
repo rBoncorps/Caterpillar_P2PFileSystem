@@ -3,6 +3,7 @@
 
 #include "consoleguicontroller.h"
 
+#include <vector>
 #include <string>
 
 using namespace std;
@@ -21,7 +22,7 @@ public:
 
 private:
 	ConsoleGUIController* controller_;
-	string currentCommand_;
+    vector<string> currentCommand_;
 
 };
 

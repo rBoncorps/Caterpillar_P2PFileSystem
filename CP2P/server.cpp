@@ -13,16 +13,15 @@
 
 using namespace std;
 
-
+string name = "big-daddy";
 
 // Global variable definition
 MapIp mapIP;
 
 void* receptionTrame(void* sock) {
     int* tmp = (int*)sock;
-    //int nouveau_socket_descriptor = *tmp;
     int socketDescriptor = *tmp;
-    ServerReceiveHandler* receiveHandler = new ServerReceiveHandler(socketDescriptor,&mapIP);
+    ServerReceiveHandler* receiveHandler = new ServerReceiveHandler(name, socketDescriptor,&mapIP);
     receiveHandler->launchReception();
 }
 

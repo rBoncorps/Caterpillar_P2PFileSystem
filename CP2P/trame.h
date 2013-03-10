@@ -6,10 +6,14 @@
 
 using namespace std;
 
-#define MAX_USERNAME_SIZE 100
-#define MAX_DATA_SIZE 1000
-//#define MAX_TRAME_SIZE 4*sizeof(int) + MAX_DATA_SIZE + MAX_USERNAME_SIZE
-#define MAX_TRAME_SIZE 1132
+typedef struct SerializableTrame {
+    TrameType typeTrame;
+    char nameSrc[MAX_USERNAME_SIZE];
+    int numTrame;
+    int nbTrames;
+    int taille;
+    char data[MAX_DATA_SIZE];
+} SerializableTrame;
 
 class Trame {
 
@@ -24,6 +28,8 @@ public:
     int getNumTrame() const;
     int getNbTrame() const;
     string getData() const;
+    SerializableTrame* getSerializableTrame();
+    void extractNameIP(string& name, string& ip);
 
 private:
     string fromName_;
@@ -32,6 +38,7 @@ private:
     int numTrame_;
     int nbTrame_;
     string data_;
+    SerializableTrame* serializableTrame;
 
 };
 
