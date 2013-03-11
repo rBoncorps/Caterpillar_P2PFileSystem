@@ -126,7 +126,6 @@ void ClientReceiveHandler::launchReception() {
                         int pos = fseek(file,0,SEEK_END);
                         int size = ftell(file);
                         rewind(file);
-                        cout << "[ClientReceiveHandler::launchReception] file size : " << size << endl;
                         int nbTrames = (int)ceil((double)size / (double)MAX_DATA_SIZE);
 
                         int readed = 0;
@@ -134,14 +133,12 @@ void ClientReceiveHandler::launchReception() {
                             char fileBuffer[MAX_DATA_SIZE];
                             int read = fread(fileBuffer,sizeof(char),MAX_DATA_SIZE,file);
                             readed += read;
-
                             string bufString;
                             bufString.assign(fileBuffer,read);
-
                             Trame* ficTrame = new Trame(name_,ENV_FIC,read,1,nbTrames,bufString);
                             socketManager_.sendTrame(ficTrame);
+                            delete ficTrame;
                         }
-                        //file.close();
                         pclose(file);
                     }
                 }

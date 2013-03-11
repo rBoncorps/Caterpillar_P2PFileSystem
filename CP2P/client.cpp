@@ -13,8 +13,8 @@
 using namespace std;
 
 // Global variables for debugging
-//string name = "bob"; string ip = "127.0.0.1";
-string name = "alice"; string ip = "127.0.0.1";
+string name = "bob"; string ip = "127.0.0.1";
+//string name = "alice"; string ip = "127.0.0.1";
 string host = "127.0.0.1";
 
 void* singleHandler(void* sock) {
