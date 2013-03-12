@@ -185,6 +185,73 @@ void ClientReceiveHandler::launchReception() {
                         pclose(file);
                     }
                 }
+                else if(currentCMD[0] == "put_file") {
+                    if(currentCMD.size() < 2) {
+                        cout << "put file pb nb arg" << endl;
+                        continue;
+                    }
+                    string filePath = currentPath;
+                    filePath += currentCMD[1];
+                    cout << "put_file path : " << filePath << endl;
+                    FILE* file = fopen(filePath.c_str(),"w");
+                    if(file == NULL) {
+                        // handle error
+                    }
+                    else {
+                        Trame* ackTrame = new Trame(name_,ACK);
+                        socketManager_.sendTrame(ackTrame);
+                        delete ackTrame;
+                        Trame* response = socketManager_.receiveTrame();
+                        if(response->getType() == ERROR) {
+                            cout << "error, aborting" << endl;
+                        }
+                        else {
+                            int fileSize = 0;
+                            if(response->getNbTrame() >= 1) {
+                                string localSavePath = currentPath;
+                                localSavePath += currentCMD[1];
+                                ofstream localFile;
+                                localFile.open(localSavePath.c_str());
+                                // handle non opening
+                                int nbWaitedTrames = response->getNbTrame();
+                                int nbReceivedTrames = 0;
+                                Trame* currentTrame = response;
+                                fileSize += currentTrame->getSize();
+                                localFile.write(currentTrame->getSerializableTrame()->data,currentTrame->getSize());
+                                nbReceivedTrames++;
+                                bool exitWaitingLoop = false;
+                                if(response->getNbTrame() == 1) {
+                                    exitWaitingLoop = true;
+                                }
+                                while(!exitWaitingLoop) {
+                                    currentTrame = socketManager_.receiveTrame();
+                                    localFile.write(currentTrame->getSerializableTrame()->data,currentTrame->getSize());
+                                    fileSize += currentTrame->getSize();
+                                    nbReceivedTrames++;
+                                    if(nbReceivedTrames == 1) {
+                                        cout << "Getting " << currentCMD[1] << " at " <<  currentPath << endl;
+                                    }
+                                    if(nbReceivedTrames == floor(nbWaitedTrames/4)) {
+                                        cout << "25% received" << endl;
+                                    }
+                                    if(nbReceivedTrames == floor(nbWaitedTrames/2)) {
+                                        cout << "50% received" << endl;
+                                    }
+                                    if(nbReceivedTrames == floor(3*nbWaitedTrames/4)) {
+                                        cout << "75% received" << endl;
+                                    }
+                                    if(nbReceivedTrames == nbWaitedTrames) {
+                                        cout << "100% received" << endl;
+                                        exitWaitingLoop = 1;
+                                    }
+                                    delete currentTrame;
+                                }
+                                localFile.close();
+
+                            }
+                        }
+                    }
+                }
             }
         }
     }

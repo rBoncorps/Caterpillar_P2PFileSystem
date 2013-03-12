@@ -21,7 +21,7 @@ public:
     string handleCdCommand(string folder);
     string handleLsCommand();
     void handleGetFileCommand(string distantFilePath);
-    void handlePutFileCommand(string localFilePath);
+    void handlePutFileCommand();
     void handleCloseCommandMode();
     void handleCloseApp();
     string getCurrentPath();

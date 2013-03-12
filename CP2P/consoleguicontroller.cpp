@@ -268,8 +268,151 @@ void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
     }
 }
 
-void ConsoleGUIController::handlePutFileCommand(string localFilePath) {
+void ConsoleGUIController::handlePutFileCommand() {
+    //getting home of the current user
+    string homePath;
+    char buffer[128];
+    FILE* home = popen("echo $HOME","r");
+    if(home == NULL) {
+        cout << "[ClientReceiveHandler::launchReception] error during the getHome command." << endl;
+        return;
+    }
+    while(!feof(home)) {
+        if(fgets(buffer, 128, home) != NULL)
+            homePath += buffer;
+    }
+    pclose(home);
+    homePath[homePath.size()-1] = '/';
+    string downloadsFolderPath = homePath;
 
+    cout << "\n\tPlease select the file to upload." << endl;
+    cout << "\t\tcommand : cd <path> | ls>" << endl;
+    cout << "\t\ttype \"select <file_name>\" to select the file to upload" << endl;
+    cout << "\t\tThe current local path is : " << downloadsFolderPath << endl;
+    bool pathSelected = false;
+    vector<string> currentCommand;
+    string fileName;
+    while(!pathSelected) {
+        cout << "\t\tLocal > " << downloadsFolderPath << "$ ";
+        string lineEnteredcmd;
+        getline(cin,lineEnteredcmd);
+        stringstream sscmd(lineEnteredcmd);
+        string itemcmd;
+        currentCommand.clear();
+        while(std::getline(sscmd, itemcmd, ' ')) {
+            currentCommand.push_back(itemcmd);
+        }
+        if(currentCommand.empty()) {
+            continue;
+        }
+        if(currentCommand[0] == "select") {
+            pathSelected = true;
+            downloadsFolderPath += currentCommand[1];
+            fileName = currentCommand[1];
+            cout << "Download directory : " << downloadsFolderPath << endl;
+            continue;
+        }
+        if(currentCommand[0] == "cd") {
+            if(currentCommand.size() < 2) {
+                cout << "\t\tcd command : invalid arg number." << endl;
+                continue;
+            }
+            string realPath = downloadsFolderPath;
+            realPath += currentCommand[1];
+            string command = "cd ";
+            command += realPath;
+            FILE* cdCmd = popen(command.c_str(),"r");
+            char buffer[128];
+            string cdReturn;
+            if(cdCmd == NULL) {
+                cout << "\t\t error during the cd command." << endl;
+                return;
+            }
+            while(!feof(cdCmd)) {
+                if(fgets(buffer, 128, cdCmd) != NULL)
+                    cdReturn += buffer;
+            }
+            pclose(cdCmd);
+            // The cd appened succesfuly
+            if(cdReturn.empty()) {
+                downloadsFolderPath = realPath;
+                downloadsFolderPath += "/";
+
+            }
+        }
+        if(currentCommand[0] == "ls") {
+            string command = "ls ";
+            command += downloadsFolderPath;
+            FILE* lsCmd = popen(command.c_str(),"r");
+            char buffer[128];
+            string lsReturn;
+            if(lsCmd == NULL) {
+                cout << "[ClientReceiveHandler::launchReception] error during the ls command." << endl;
+                return;
+            }
+            while(!feof(lsCmd)) {
+                if(fgets(buffer, 128, lsCmd) != NULL)
+                    lsReturn += buffer;
+            }
+            pclose(lsCmd);
+            cout << lsReturn << endl;
+        }
+    }
+
+    string putFileCommand = "put_file ";
+    putFileCommand += fileName;
+
+    Trame* envFicTrame = new Trame(username_,CMD,putFileCommand.size(),1,1,putFileCommand);
+    socketManager_.sendTrame(envFicTrame);
+    Trame* response = socketManager_.receiveTrame();
+    if(response->getType() == ERROR) {
+        throw runtime_error(response->getData());
+    }
+    string filePath = downloadsFolderPath;
+    cout << "file to upload : " << filePath << endl;
+    FILE* file = fopen(filePath.c_str(),"r");
+    if(file == NULL) {
+        string errorMessage = "Cannot open the file ";
+        errorMessage += downloadsFolderPath;
+        cout << errorMessage << endl;
+        Trame* errorTrame = new Trame(username_,ERROR,errorMessage.size(),1,1,errorMessage);
+        socketManager_.sendTrame(errorTrame);
+    }
+    else {
+        int pos = fseek(file,0,SEEK_END);
+        int size = ftell(file);
+        rewind(file);
+        int nbTrames = (int)ceil((double)size / (double)MAX_DATA_SIZE);
+        int readed = 0;
+        int sended = 0;
+        for(int i = 0; i < nbTrames; i++) {
+            char fileBuffer[MAX_DATA_SIZE];
+            int read = fread(fileBuffer,sizeof(char),MAX_DATA_SIZE,file);
+            readed += read;
+            string bufString;
+            bufString.assign(fileBuffer,read);
+            Trame* ficTrame = new Trame(username_,ENV_FIC,read,1,nbTrames,bufString);
+            socketManager_.sendTrame(ficTrame);
+            sended++;
+            if(sended == 1) {
+                cout << "Uploading " << fileName << endl;
+            }
+            if(sended == floor(nbTrames/4)) {
+                cout << "25% sended" << endl;
+            }
+            if(sended == floor(nbTrames/2)) {
+                cout << "50% sended" << endl;
+            }
+            if(sended == floor(3*nbTrames/4)) {
+                cout << "75% sended" << endl;
+            }
+            if(sended == nbTrames) {
+                cout << "100% sended" << endl;
+            }
+            delete ficTrame;
+        }
+        pclose(file);
+    }
 }
 
 void ConsoleGUIController::handleCloseCommandMode() {

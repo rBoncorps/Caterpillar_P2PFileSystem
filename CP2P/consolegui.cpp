@@ -130,11 +130,7 @@ void ConsoleGUI::launchGUI() {
                         }
                     }
                     if(currentCommand_[0] == "put_file") {
-                        if(currentCommand_.size() < 2) {
-                            cout << "put_file : invalid arguement, use put_file <fileName>" << endl;
-                            continue;
-                        }
-                        controller_->handlePutFileCommand(currentCommand_[1]);
+                        controller_->handlePutFileCommand();
                     }
                 }
             }
