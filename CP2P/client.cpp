@@ -14,8 +14,12 @@ using namespace std;
 
 // Global variables for debugging
 //string name = "bob"; string ip = "127.0.0.1";
-string name = "alice"; string ip = "127.0.0.1";
-string host = "127.0.0.1";
+//string name = "alice"; string ip = "127.0.0.1";
+//string host = "127.0.0.1";
+
+string name;
+string ip;
+string host;
 
 void* singleHandler(void* sock) {
     int* tmp = (int*)sock;
@@ -47,6 +51,12 @@ void* handleTrame() {
 
 int main(int argc, char** argv) {
     cout << "Welcome to CP2P file system !" << endl;
+    cout << "Please enter your username" << endl;
+    cin >> name;
+    cout << "Please enter your ip adress" << endl;
+    cin >> ip;
+    cout << "Please enter the server ip adress" << endl;
+    cin >> host;
     // DEBUG
     cout << "Hello " << name << endl;
     ConsoleGUIController* controller = new ConsoleGUIController(name,ip,"big-daddy",host);
