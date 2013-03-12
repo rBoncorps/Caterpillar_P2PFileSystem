@@ -24,6 +24,7 @@ public:
     void handlePutFileCommand(string localFilePath);
     void handleCloseCommandMode();
     void handleCloseApp();
+    string getCurrentPath();
 
 
 private:

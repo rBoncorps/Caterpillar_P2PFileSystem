@@ -74,6 +74,7 @@ void ClientReceiveHandler::launchReception() {
                         cout << "[ClientReceiveHandler::launchReception] cd command : invalid arg number." << endl;
                         continue;
                     }
+                    Trame* cdTrame;
                     string realPath = currentPath;
                     realPath += currentCMD[1];
                     cout << "[ClientReceiveHandler::launchReception] realPath : " << realPath << endl;
@@ -92,14 +93,18 @@ void ClientReceiveHandler::launchReception() {
                             cdReturn += buffer;
                     }
                     pclose(cdCmd);
+
                     // The cd appened succesfuly
                     if(cdReturn.empty()) {
                         currentPath = realPath;
                         currentPath += "/";
                         cout << "[ClientReceiveHandler::launchReception] cd appends succesfuly" << endl;
+                        cdTrame = new Trame(name_,MAJ_PATH,currentPath.size(),1,1,currentPath);
+                    }
+                    else {
+                        cdTrame = new Trame(name_,CD_RET,cdReturn.size(),1,1,cdReturn);
                     }
                     cout << "[ClientReceiveHandler::launchReception] new currentPath : " << currentPath << endl;
-                    Trame* cdTrame = new Trame(name_,CD_RET,cdReturn.size(),1,1,cdReturn);
                     socketManager_.sendTrame(cdTrame);
                 }
                 else if(currentCMD[0] == "ls") {

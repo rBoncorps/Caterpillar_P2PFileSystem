@@ -73,7 +73,7 @@ void ConsoleGUI::launchGUI() {
                 }
                 cout << "You entered command mode. Allowed command : cd <folder> | ls | get_file <file>" << endl;
                 while(!exitCmdMode) {
-                    cout << "\t>";
+                    cout << "\tDistant:" << currentCmdContact << " > " << controller_->getCurrentPath() << "$ ";
                     string lineEnteredcmd;
                     getline(cin,lineEnteredcmd);
                     stringstream sscmd(lineEnteredcmd);

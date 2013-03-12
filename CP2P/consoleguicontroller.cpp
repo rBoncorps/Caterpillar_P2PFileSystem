@@ -73,6 +73,10 @@ string ConsoleGUIController::handleCdCommand(string folder) {
     if(response->getType() == ERROR) {
         throw runtime_error(response->getData());
     }
+    else if(response->getType() == MAJ_PATH) {
+        currentPath_ = response->getData();
+        return "";
+    }
     return response->getData();
 }
 
@@ -111,21 +115,20 @@ void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
     Trame* checkFicTrame = new Trame(username_,CMD,checkFileCommand.size(),1,1,checkFileCommand);
     socketManager_.sendTrame(checkFicTrame);
     Trame* respCheck = socketManager_.receiveTrame();
-    cout << "respCheck received : " << respCheck->getData().at(0) << endl;
     if(respCheck->getData().at(0) == 'N') {
-        cout << "The file is not available on remote client." << endl;
-        cout << "Please try again." << endl;
+        cout << "\tThe file is not available on remote client." << endl;
+        cout << "\tPlease try again." << endl;
         return;
     }
     else if(respCheck->getData().at(0) == 'O') {
-        cout << "Please select a download location." << endl;
-        cout << "command : cd <path> | ls | mkdir <newDirectory>" << endl;
-        cout << "type \"select\" to select the current location for download" << endl;
-        cout << "The current download path is : " << downloadsFolderPath << endl;
+        cout << "\n\tPlease select a download location." << endl;
+        cout << "\t\tcommand : cd <path> | ls | mkdir <newDirectory>" << endl;
+        cout << "\t\ttype \"select\" to select the current location for download" << endl;
+        cout << "\t\tThe current download path is : " << downloadsFolderPath << endl;
         bool pathSelected = false;
         vector<string> currentCommand;
         while(!pathSelected) {
-            cout << "\t>";
+            cout << "\t\tLocal > " << downloadsFolderPath << "$ ";
             string lineEnteredcmd;
             getline(cin,lineEnteredcmd);
             stringstream sscmd(lineEnteredcmd);
@@ -144,20 +147,18 @@ void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
             }
             if(currentCommand[0] == "cd") {
                 if(currentCommand.size() < 2) {
-                    cout << "[ClientReceiveHandler::launchReception] cd command : invalid arg number." << endl;
+                    cout << "\t\tcd command : invalid arg number." << endl;
                     continue;
                 }
                 string realPath = downloadsFolderPath;
                 realPath += currentCommand[1];
-                cout << "[ClientReceiveHandler::launchReception] realPath : " << realPath << endl;
                 string command = "cd ";
                 command += realPath;
-                cout << "[ClientReceiveHandler::launchReception] command : " << command << endl;
                 FILE* cdCmd = popen(command.c_str(),"r");
                 char buffer[128];
                 string cdReturn;
                 if(cdCmd == NULL) {
-                    cout << "[ClientReceiveHandler::launchReception] error during the cd command." << endl;
+                    cout << "\t\t error during the cd command." << endl;
                     return;
                 }
                 while(!feof(cdCmd)) {
@@ -169,7 +170,7 @@ void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
                 if(cdReturn.empty()) {
                     downloadsFolderPath = realPath;
                     downloadsFolderPath += "/";
-                    cout << "[ClientReceiveHandler::launchReception] cd appends succesfuly" << endl;
+
                 }
             }
             if(currentCommand[0] == "ls") {
@@ -277,4 +278,8 @@ void ConsoleGUIController::handleCloseCommandMode() {
 
 void ConsoleGUIController::handleCloseApp() {
 
+}
+
+string ConsoleGUIController::getCurrentPath() {
+    return currentPath_;
 }
