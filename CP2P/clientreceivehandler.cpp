@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <cmath>
 #include <fstream>
+#include <stdexcept>
 
 ClientReceiveHandler::ClientReceiveHandler(string name, int socketDescriptor) : ReceiveHandler(name, socketDescriptor) {
 
@@ -16,7 +17,14 @@ ClientReceiveHandler::~ClientReceiveHandler() {
 }
 
 void ClientReceiveHandler::launchReception() {
-    Trame* receivedTrame = socketManager_.receiveTrame();
+    Trame* receivedTrame;
+    try {
+        receivedTrame = socketManager_.receiveTrame();
+    }catch(runtime_error& e) {
+        cout << "Remote ends up, closing the connexion" << endl;
+        close(socketManager_.getSocketDescriptor());
+        return;
+    }
     if(receivedTrame->getType() == CHECK_CON) {
         cout << "[ClientReceiveHandler::launchReception] received a CHECK_CON from " << receivedTrame->getFrom() << endl;
         Trame* ackTrame = new Trame(name_,ACK_CON);
@@ -42,7 +50,13 @@ void ClientReceiveHandler::launchReception() {
         socketManager_.sendTrame(homePathTrame);
         bool exitCmdMode = false;
         while(!exitCmdMode) {
-            Trame* receivedCMDTrame = socketManager_.receiveTrame();
+            Trame* receivedCMDTrame;
+            try {
+                receivedCMDTrame = socketManager_.receiveTrame();
+            }catch(runtime_error& e) {
+                cout << "Remote ends up, closing the connexion" << endl;
+                return;
+            }
             if(receivedCMDTrame->getType() == CMD) {
                 cout << "[ClientReceiveHandler::launchReception] Received a command" << endl;
                 vector<string> currentCMD;

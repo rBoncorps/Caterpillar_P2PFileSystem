@@ -148,6 +148,7 @@ Trame* SocketManager::receiveTrame() const {
 bool SocketManager::checkConnexion(string from) {
     Trame* checkTrame = new Trame(from,CHECK_CON);
     sendTrame(checkTrame);
+    cout << "checkCon ok" << endl;
     Trame* returnedTrame = receiveTrame();
     bool connected = (returnedTrame->getType() == ACK_CON);
     delete checkTrame;

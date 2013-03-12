@@ -16,8 +16,14 @@ ServerReceiveHandler::~ServerReceiveHandler() {
 
 void ServerReceiveHandler::launchReception() {
     bool stopReception = false;
+    Trame* receivedTrame;
     while(!stopReception) {
-        Trame* receivedTrame = socketManager_.receiveTrame();
+        try {
+        receivedTrame = socketManager_.receiveTrame();
+        }catch(runtime_error& e) {
+            cout << "client ends up (in the naaaaaaaaaaaaaaaaaaaaaaaaaaavy" << endl;
+            return;
+        }
         if(receivedTrame->getType() == CON_SERV) {
             cout << "[ReceiveHandler::launchReception] Received a CON_SERV trame." << endl;
             cout << "[ReceiveHandler::launchReception] Datas : " << receivedTrame->getData() << endl;
@@ -60,16 +66,24 @@ void ServerReceiveHandler::launchReception() {
             }
             string ip = it->second;
             SocketManager* otherClientSocketManager = new SocketManager();
+            bool reachable = true;
             try {
                 otherClientSocketManager->connectTo(name,ip);
             }catch(runtime_error& e) {
-                string errorMessage = "The client is not connected.";
+                reachable = false;
+                string errorMessage = "The client is not connected.pouetpouet";
                 cout << "[ReceiveHandler::launchReception] " << errorMessage << endl;
                 Trame* errorTrame = new Trame("big-daddy",ERROR,errorMessage.size(),1,1,errorMessage);
                 socketManager_.sendTrame(errorTrame);
             }
-            bool connected = otherClientSocketManager->checkConnexion("big-daddy");
+            bool connected = false;
+            if(reachable) {
+                connected = otherClientSocketManager->checkConnexion("big-daddy");
+            cout << "petitpatapon" << endl;
+            }
             if(connected) {
+                close(otherClientSocketManager->getSocketDescriptor());
+                cout << "YMCA" << endl;
                 string response;
                 response += name += ':';
                 response += ip;
@@ -77,6 +91,7 @@ void ServerReceiveHandler::launchReception() {
                 socketManager_.sendTrame(ackTrame);
             }
             else {
+                cout << "pifpafpouf" << endl;
                 string errorMessage = "The client is not connected.";
                 cout << "[ReceiveHandler::launchReception] " << errorMessage << endl;
                 Trame* errorTrame = new Trame("big-daddy",ERROR,errorMessage.size(),1,1,errorMessage);

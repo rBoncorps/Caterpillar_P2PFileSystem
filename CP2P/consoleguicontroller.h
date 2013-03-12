@@ -12,9 +12,10 @@ typedef map<string,string> MapFriend;
 
 class ConsoleGUIController {
 public:
-    ConsoleGUIController(string username,string serverName, string serverIP);
+    ConsoleGUIController(string username,string userIP,string serverName, string serverIP);
     ~ConsoleGUIController();
 
+    bool connectServer();
     void handleAddFriend(string friendName);
     void handleCommandMode(string friendName);
     string handleCdCommand(string folder);
@@ -27,6 +28,9 @@ public:
 
 private:
     string username_;
+    string userIP_;
+    string serverName_;
+    string serverIP_;
     string currentPath_;
     SocketManager socketManager_;
     SocketManager serverSocketManager_;

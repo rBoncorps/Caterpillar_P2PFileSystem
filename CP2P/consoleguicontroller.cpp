@@ -4,14 +4,31 @@
 #include <stdexcept>
 #include <stdio.h>
 #include <fstream>
+#include <cmath>
 
-ConsoleGUIController::ConsoleGUIController(string username,string serverName, string serverIP) : socketManager_(), serverSocketManager_() {
+ConsoleGUIController::ConsoleGUIController(string username,string userIP,string serverName, string serverIP) : socketManager_(), serverSocketManager_() {
     username_ = username;
-    serverSocketManager_.connectTo(serverName,serverIP);
+    userIP_ = userIP;
+    serverName_ = serverName;
+    serverIP_ = serverIP;
 }
 
 ConsoleGUIController::~ConsoleGUIController() {
 
+}
+
+bool ConsoleGUIController::connectServer() {
+    serverSocketManager_.connectTo(serverName_,serverIP_);
+    string msg = username_;
+    msg += ':';
+    msg += userIP_;
+    Trame* connexionTrame = new Trame(username_,CON_SERV,msg.size(),1,1,msg);
+    serverSocketManager_.sendTrame(connexionTrame);
+    // Receive the server response
+    Trame* ackTrame = serverSocketManager_.receiveTrame();
+    if(ackTrame->getType() == ACK_CON) {
+        return true;
+    }
 }
 
 void ConsoleGUIController::handleAddFriend(string friendName) {
@@ -103,7 +120,20 @@ void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
             localFile.write(currentTrame->getSerializableTrame()->data,currentTrame->getSize());
             fileSize += currentTrame->getSize();
             nbReceivedTrames++;
+            if(nbReceivedTrames == 1) {
+                cout << "Start download ..." << endl;
+            }
+            if(nbReceivedTrames == floor(nbWaitedTrames/4)) {
+                cout << "25% received" << endl;
+            }
+            if(nbReceivedTrames == floor(nbWaitedTrames/2)) {
+                cout << "50% received" << endl;
+            }
+            if(nbReceivedTrames == floor(3*nbWaitedTrames/4)) {
+                cout << "75% received" << endl;
+            }
             if(nbReceivedTrames == nbWaitedTrames) {
+                cout << "100% received" << endl;
                 exitWaitingLoop = 1;
             }
             delete currentTrame;
