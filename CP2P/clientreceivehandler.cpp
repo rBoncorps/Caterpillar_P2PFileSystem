@@ -121,6 +121,30 @@ void ClientReceiveHandler::launchReception() {
                     Trame* lsTrame = new Trame(name_,LS_RET,lsReturn.size(),1,1,lsReturn);
                     socketManager_.sendTrame(lsTrame);
                 }
+                else if(currentCMD[0] == "check_file") {
+                    if(currentCMD.size() < 2) {
+                        cout << "[ClientReceiveHandler::launchReception] check_file command : invalid arg number." << endl;
+                        continue;
+                    }
+                    cout << "[ClientReceiveHandler::launchReception] want to check the existance of file  " << currentPath << currentCMD[1] << endl;
+                    string filePath = currentPath;
+                    filePath += currentCMD[1];
+                    FILE* file = fopen(filePath.c_str(),"r");
+                    string msg;
+                    Trame* checkFileRetTrame;
+                    if(file == NULL) {
+                        cout << "the file doesn't exist" << endl;
+                        msg = "N";
+                        checkFileRetTrame = new Trame(name_,CMD,msg.size(),1,1,msg);
+                    }
+                    else {
+                        pclose(file);
+                        cout << "the file exists" << endl;
+                        msg = "O";
+                        checkFileRetTrame = new Trame(name_,CMD,msg.size(),1,1,msg);
+                    }
+                    socketManager_.sendTrame(checkFileRetTrame);
+                }
                 else if(currentCMD[0] == "get_file") {
                     if(currentCMD.size() < 2) {
                         cout << "[ClientReceiveHandler::launchReception] get_file command : invalid arg number." << endl;

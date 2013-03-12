@@ -1,6 +1,7 @@
 #include "consoleguicontroller.h"
 
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <stdio.h>
 #include <fstream>
@@ -88,8 +89,132 @@ string ConsoleGUIController::handleLsCommand() {
 }
 
 void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
+    //getting home of the current user
+    string homePath;
+    char buffer[128];
+    FILE* home = popen("echo $HOME","r");
+    if(home == NULL) {
+        cout << "[ClientReceiveHandler::launchReception] error during the getHome command." << endl;
+        return;
+    }
+    while(!feof(home)) {
+        if(fgets(buffer, 128, home) != NULL)
+            homePath += buffer;
+    }
+    pclose(home);
+    homePath[homePath.size()-1] = '/';
+    string downloadsFolderPath = homePath;
+
+    //sending check_file_existance trame
+    string checkFileCommand = "check_file ";
+    checkFileCommand += distantFilePath;
+    Trame* checkFicTrame = new Trame(username_,CMD,checkFileCommand.size(),1,1,checkFileCommand);
+    socketManager_.sendTrame(checkFicTrame);
+    Trame* respCheck = socketManager_.receiveTrame();
+    cout << "respCheck received : " << respCheck->getData().at(0) << endl;
+    if(respCheck->getData().at(0) == 'N') {
+        cout << "The file is not available on remote client." << endl;
+        cout << "Please try again." << endl;
+        return;
+    }
+    else if(respCheck->getData().at(0) == 'O') {
+        cout << "Please select a download location." << endl;
+        cout << "command : cd <path> | ls | mkdir <newDirectory>" << endl;
+        cout << "type \"select\" to select the current location for download" << endl;
+        cout << "The current download path is : " << downloadsFolderPath << endl;
+        bool pathSelected = false;
+        vector<string> currentCommand;
+        while(!pathSelected) {
+            cout << "\t>";
+            string lineEnteredcmd;
+            getline(cin,lineEnteredcmd);
+            stringstream sscmd(lineEnteredcmd);
+            string itemcmd;
+            currentCommand.clear();
+            while(std::getline(sscmd, itemcmd, ' ')) {
+                currentCommand.push_back(itemcmd);
+            }
+            if(currentCommand.empty()) {
+                continue;
+            }
+            if(currentCommand[0] == "select") {
+                pathSelected = true;
+                cout << "Download directory : " << downloadsFolderPath << endl;
+                continue;
+            }
+            if(currentCommand[0] == "cd") {
+                if(currentCommand.size() < 2) {
+                    cout << "[ClientReceiveHandler::launchReception] cd command : invalid arg number." << endl;
+                    continue;
+                }
+                string realPath = downloadsFolderPath;
+                realPath += currentCommand[1];
+                cout << "[ClientReceiveHandler::launchReception] realPath : " << realPath << endl;
+                string command = "cd ";
+                command += realPath;
+                cout << "[ClientReceiveHandler::launchReception] command : " << command << endl;
+                FILE* cdCmd = popen(command.c_str(),"r");
+                char buffer[128];
+                string cdReturn;
+                if(cdCmd == NULL) {
+                    cout << "[ClientReceiveHandler::launchReception] error during the cd command." << endl;
+                    return;
+                }
+                while(!feof(cdCmd)) {
+                    if(fgets(buffer, 128, cdCmd) != NULL)
+                        cdReturn += buffer;
+                }
+                pclose(cdCmd);
+                // The cd appened succesfuly
+                if(cdReturn.empty()) {
+                    downloadsFolderPath = realPath;
+                    downloadsFolderPath += "/";
+                    cout << "[ClientReceiveHandler::launchReception] cd appends succesfuly" << endl;
+                }
+            }
+            if(currentCommand[0] == "ls") {
+                string command = "ls ";
+                command += downloadsFolderPath;
+                FILE* lsCmd = popen(command.c_str(),"r");
+                char buffer[128];
+                string lsReturn;
+                if(lsCmd == NULL) {
+                    cout << "[ClientReceiveHandler::launchReception] error during the ls command." << endl;
+                    return;
+                }
+                while(!feof(lsCmd)) {
+                    if(fgets(buffer, 128, lsCmd) != NULL)
+                        lsReturn += buffer;
+                }
+                pclose(lsCmd);
+                cout << lsReturn << endl;
+            }
+            if(currentCommand[0] == "mkdir") {
+                string command = "mkdir ";
+                command += downloadsFolderPath;
+                command += currentCommand[1];
+                FILE* mkdirCmd = popen(command.c_str(),"r");
+                char buffer[128];
+                string mkdirReturn;
+                if(mkdirCmd == NULL) {
+                    cout << "[ClientReceiveHandler::launchReception] error during the mkdir command." << endl;
+                    return;
+                }
+                while(!feof(mkdirCmd)) {
+                    if(fgets(buffer, 128, mkdirCmd) != NULL)
+                        mkdirReturn += buffer;
+                }
+                pclose(mkdirCmd);
+                if(mkdirReturn.empty()) {
+                    cout << "[ClientReceiveHandler::launchReception] mkdir succesfull" << endl;
+                }
+            }
+        }
+    }
+
     string getFileCommand = "get_file ";
     getFileCommand += distantFilePath;
+
     Trame* demFicTrame = new Trame(username_,CMD,getFileCommand.size(),1,1,getFileCommand);
     socketManager_.sendTrame(demFicTrame);
     //cout << "[ConsoleGUIController::handleGetFileCommand] send a DEM_FIC trame" << endl;
@@ -97,7 +222,6 @@ void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
     if(response->getType() == ERROR) {
         throw runtime_error(response->getData());
     }
-    string downloadsFolderPath = "Downloads/";
     int fileSize = 0;
     if(response->getNbTrame() >= 1) {
         string localSavePath = downloadsFolderPath;

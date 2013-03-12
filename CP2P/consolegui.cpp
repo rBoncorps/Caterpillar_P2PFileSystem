@@ -16,6 +16,7 @@ ConsoleGUI::~ConsoleGUI() {
 }
 
 void ConsoleGUI::launchGUI() {
+
     while(true) {
         cout << "Enter a command or type help"  << endl;
         /* Extract from the given line the command, and all the
@@ -70,7 +71,7 @@ void ConsoleGUI::launchGUI() {
                     cout << e.what() << endl;
                     continue;
                 }
-                cout << "You entered command mode. Allowed command : cd<folder> | ls | get_file<file>" << endl;
+                cout << "You entered command mode. Allowed command : cd <folder> | ls | get_file <file>" << endl;
                 while(!exitCmdMode) {
                     cout << "\t>";
                     string lineEnteredcmd;
