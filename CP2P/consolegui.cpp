@@ -25,17 +25,21 @@ void ConsoleGUI::launchGUI() {
         */
         string lineEntered;
         getline(cin,lineEntered);
-        cout << "[ConsoleGUI::launchGUI] prompt : " << lineEntered << endl;
         stringstream ss(lineEntered);
         string item;
         currentCommand_.clear();
         while(std::getline(ss, item, ' ')) {
             currentCommand_.push_back(item);
         }
-        cout << "[ConsoleGUI::launchGUI] command size : " << currentCommand_.size() << endl;
         if(currentCommand_.empty()) {
             // Handle the case of an empty input
             continue;
+        }
+        if(currentCommand_[0] == "help") {
+            cout << "use \"add_friend <username>\" command to add an other username as a friend." << endl;
+            cout << "use \"cmd <username>\" command to start a command mode with the username (must be a friend)." << endl;
+            cout << "\t in command mode you can use ls | cd to update the path you're looking at on the remote." << endl;
+            cout << "\t use \"get_file\" or \"put_file\" commands to get a remote file or put a local one on the remote." << endl;
         }
         if(currentCommand_[0] == "add_friend") {
             if(currentCommand_.size() < 2) {

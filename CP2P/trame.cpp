@@ -57,11 +57,9 @@ SerializableTrame* Trame::getSerializableTrame() {
 void Trame::extractNameIP(string &name, string &ip) {
     size_t splitPos = data_.find(':');
     if(splitPos == string::npos) {
-        cout << "[Trame::extractNameIP] The given string does not contain ':'" << endl;
         throw runtime_error("Trame data does not contain ':'");
     }
     name = data_.substr(0,splitPos);
     ip = data_.substr(splitPos+1,data_.size());
-    cout << "[Trame::extractNameIP] extracted " << name << "="<< ip << " from " << data_ << endl;
 }
 

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <stdexcept>
 
 #include "consolegui.h"
 #include "consoleguicontroller.h"
@@ -57,11 +58,19 @@ int main(int argc, char** argv) {
     cin >> ip;
     cout << "Please enter the server ip adress" << endl;
     cin >> host;
+    cout << endl;
     // DEBUG
     cout << "Hello " << name << endl;
     ConsoleGUIController* controller = new ConsoleGUIController(name,ip,"big-daddy",host);
     ConsoleGUI* consoleGUI = new ConsoleGUI(controller);
-    bool connected = controller->connectServer();
+    bool connected = false;
+    try {
+        connected = controller->connectServer();
+    }catch(runtime_error& e) {
+        "Server is unreachable, closing the application.";
+        return -1;
+    }
+
     if(connected) {
         cout  << "You are now connected to CP2P service." << endl;
     }

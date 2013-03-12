@@ -32,9 +32,7 @@ void SocketManager::connectTo(string name, string ip) {
     hostent* clientHost;
     servent* clientService;
     sockaddr_in clientAdress;
-    cout << "[SocketManager::connectTo] Try to connect to IP : " << ip << endl;
     if((clientHost = gethostbyname(ip.c_str())) == NULL) {
-        cout << "[SocketManager::connectTo] Can not find the client " << ip << endl;
         throw runtime_error("Can not find the client");
     }
     bcopy((char*)clientHost->h_addr, (char*)&clientAdress.sin_addr, clientHost->h_length);
@@ -42,24 +40,19 @@ void SocketManager::connectTo(string name, string ip) {
     // DEBUG : local dev
     if(name == "bob") {
         clientAdress.sin_port = htons(5002);
-        cout << "[SocketManager::connectTo] Contact port : 5002." << endl;
     }
     else if(name == "alice") {
         clientAdress.sin_port = htons(5003);
-        cout << "[SocketManager::connectTo] Contact port : 5003." << endl;
     }
     else {
         clientAdress.sin_port = htons(5001);
-        cout << "[SocketManager::connectTo] Contact port : 5001." << endl;
     }
     // /DEBUG : local dev
     socketDescriptor_ = socket(AF_INET,SOCK_STREAM,0);
     if(socketDescriptor_ < 0) {
-        cout << "[SocketManager::connectTo] Can not create the connexion socket with the client." << endl;
         throw runtime_error("Can not create the connexion socket with the client.");
     }
     if((connect(socketDescriptor_, (sockaddr*)(&clientAdress), sizeof(clientAdress))) < 0) {
-        cout << "[SocketManager::connectTo] Can not establish a connexion to the client." << endl;
         throw runtime_error("Can not establish a connexion to the client.");
     }
 }
@@ -74,9 +67,7 @@ void SocketManager::startListening(string name) {
     sockaddr_in localAdress;
     char machine[MAX_USERNAME_SIZE+1];
     gethostname(machine,MAX_USERNAME_SIZE);
-    cout << "[SocketManager::startListening] Local host name : " << machine << endl;
     if((localHost=gethostbyname(machine))==NULL){
-        cout << "[SocketManager::startListening] Cannot launch the listening server" << endl;
         throw runtime_error("Cannot launch the listening server");
     }
     bcopy((char*)localHost->h_addr,(char*)&localAdress.sin_addr,localHost->h_length);
@@ -85,23 +76,18 @@ void SocketManager::startListening(string name) {
     // DEBUG : local dev
     if(name == "bob") {
         localAdress.sin_port = htons(5002);
-        cout << "[SocketManager::startListening] Contact port : 5002" << endl;
     }
     else if(name == "alice") {
         localAdress.sin_port = htons(5003);
-        cout << "[SocketManager::startListening] Contact port : 5003" << endl;
     }
     else {
         localAdress.sin_port = htons(5001);
-        cout << "[SocketManager::startListening] Contact port : 5001" << endl;
     }
     socketDescriptor_ = socket(AF_INET,SOCK_STREAM,0);
     if(socketDescriptor_ < 0) {
-        cout << "[SocketManager::startListening] Cannot create the listening socket." << endl;
         throw runtime_error("Cannot create the listening socket");
     }
     if((bind(socketDescriptor_,(sockaddr*)(&localAdress),sizeof(localAdress)))<0){
-        cout << "[SocketManager::startListening] Cannot link to the listening socket." << endl;
         throw runtime_error("Cannot link to the listening socket.");
     }
     listen(socketDescriptor_,5);
@@ -113,7 +99,6 @@ void SocketManager::startListening(string name) {
 void SocketManager::sendTrame(Trame *trame) {
     SerializableTrame* serializable = trame->getSerializableTrame();
     if(write(socketDescriptor_,(char*)serializable,MAX_TRAME_SIZE) < 0) {
-        cout << "[SocketManager::sendTrame] Cannot send the trame in the socket." << endl;
         throw runtime_error("Cannot send the trame in the socket.");
     }
 }
@@ -128,7 +113,6 @@ Trame* SocketManager::receiveTrame() const {
     char buffer[MAX_TRAME_SIZE];
     int bufferSize = read(socketDescriptor_, buffer, MAX_TRAME_SIZE);
     if(bufferSize <= 0) {
-        cout << "[SocketManager::receiveTrame] An error occured when during the read of the socket " << socketDescriptor_ << endl;
         throw runtime_error("An error occured when during the read of the socket");
         return NULL;
     }
@@ -148,7 +132,6 @@ Trame* SocketManager::receiveTrame() const {
 bool SocketManager::checkConnexion(string from) {
     Trame* checkTrame = new Trame(from,CHECK_CON);
     sendTrame(checkTrame);
-    cout << "checkCon ok" << endl;
     Trame* returnedTrame = receiveTrame();
     bool connected = (returnedTrame->getType() == ACK_CON);
     delete checkTrame;

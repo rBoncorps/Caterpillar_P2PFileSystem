@@ -26,17 +26,18 @@ void ClientReceiveHandler::launchReception() {
         return;
     }
     if(receivedTrame->getType() == CHECK_CON) {
-        cout << "[ClientReceiveHandler::launchReception] received a CHECK_CON from " << receivedTrame->getFrom() << endl;
         Trame* ackTrame = new Trame(name_,ACK_CON);
-        socketManager_.sendTrame(ackTrame);
+        try {
+            socketManager_.sendTrame(ackTrame);
+        }catch(runtime_error& e) {
+            return;
+        }
     }
     else if(receivedTrame->getType() == CMD_CON) {
-        cout << "[ClientReceiveHandler::launchReception] received a CMD_CON from " << receivedTrame->getFrom() << endl;
         string currentPath;
         char buffer[128];
         FILE* home = popen("echo $HOME","r");
         if(home == NULL) {
-            cout << "[ClientReceiveHandler::launchReception] error during the getHome command." << endl;
             return;
         }
         while(!feof(home)) {
@@ -45,20 +46,22 @@ void ClientReceiveHandler::launchReception() {
         }
         pclose(home);
         currentPath[currentPath.size()-1] = '/';
-        cout << "[ClientReceiveHandler::launchReception] CurrentPath : " << currentPath << endl;
         Trame* homePathTrame = new Trame(name_,CMD_HOME,currentPath.size(),1,1,currentPath);
-        socketManager_.sendTrame(homePathTrame);
+        try {
+            socketManager_.sendTrame(homePathTrame);
+        }catch(runtime_error& e) {
+            return;
+        }
+
         bool exitCmdMode = false;
         while(!exitCmdMode) {
             Trame* receivedCMDTrame;
             try {
                 receivedCMDTrame = socketManager_.receiveTrame();
             }catch(runtime_error& e) {
-                cout << "Remote ends up, closing the connexion" << endl;
                 return;
             }
             if(receivedCMDTrame->getType() == CMD) {
-                cout << "[ClientReceiveHandler::launchReception] Received a command" << endl;
                 vector<string> currentCMD;
                 stringstream ss(receivedCMDTrame->getData());
                 string item;
@@ -66,26 +69,21 @@ void ClientReceiveHandler::launchReception() {
                     currentCMD.push_back(item);
                 }
                 if(currentCMD.empty()) {
-                    cout << "[ClientReceiveHandler::launchReception] Received an invalid command, aborting handeling." << endl;
                     continue;
                 }
                 if(currentCMD[0] == "cd") {
                     if(currentCMD.size() < 2) {
-                        cout << "[ClientReceiveHandler::launchReception] cd command : invalid arg number." << endl;
                         continue;
                     }
                     Trame* cdTrame;
                     string realPath = currentPath;
                     realPath += currentCMD[1];
-                    cout << "[ClientReceiveHandler::launchReception] realPath : " << realPath << endl;
                     string command = "cd ";
                     command += realPath;
-                    cout << "[ClientReceiveHandler::launchReception] command : " << command << endl;
                     FILE* cdCmd = popen(command.c_str(),"r");
                     char buffer[128];
                     string cdReturn;
                     if(cdCmd == NULL) {
-                        cout << "[ClientReceiveHandler::launchReception] error during the cd command." << endl;
                         return;
                     }
                     while(!feof(cdCmd)) {
@@ -98,14 +96,16 @@ void ClientReceiveHandler::launchReception() {
                     if(cdReturn.empty()) {
                         currentPath = realPath;
                         currentPath += "/";
-                        cout << "[ClientReceiveHandler::launchReception] cd appends succesfuly" << endl;
                         cdTrame = new Trame(name_,MAJ_PATH,currentPath.size(),1,1,currentPath);
                     }
                     else {
                         cdTrame = new Trame(name_,CD_RET,cdReturn.size(),1,1,cdReturn);
                     }
-                    cout << "[ClientReceiveHandler::launchReception] new currentPath : " << currentPath << endl;
-                    socketManager_.sendTrame(cdTrame);
+                    try {
+                        socketManager_.sendTrame(cdTrame);
+                    }catch(runtime_error& e) {
+                        return;
+                    }
                 }
                 else if(currentCMD[0] == "ls") {
                     string command = "ls ";
@@ -114,7 +114,6 @@ void ClientReceiveHandler::launchReception() {
                     char buffer[128];
                     string lsReturn;
                     if(lsCmd == NULL) {
-                        cout << "[ClientReceiveHandler::launchReception] error during the ls command." << endl;
                         return;
                     }
                     while(!feof(lsCmd)) {
@@ -122,40 +121,41 @@ void ClientReceiveHandler::launchReception() {
                             lsReturn += buffer;
                     }
                     pclose(lsCmd);
-                    cout << "[ClientReceiveHandler::launchReception] ls return : " << lsReturn << endl;
                     Trame* lsTrame = new Trame(name_,LS_RET,lsReturn.size(),1,1,lsReturn);
-                    socketManager_.sendTrame(lsTrame);
+                    try {
+                        socketManager_.sendTrame(lsTrame);
+                    }catch(runtime_error& e) {
+                        return;
+                    }
                 }
                 else if(currentCMD[0] == "check_file") {
                     if(currentCMD.size() < 2) {
-                        cout << "[ClientReceiveHandler::launchReception] check_file command : invalid arg number." << endl;
                         continue;
                     }
-                    cout << "[ClientReceiveHandler::launchReception] want to check the existance of file  " << currentPath << currentCMD[1] << endl;
                     string filePath = currentPath;
                     filePath += currentCMD[1];
                     FILE* file = fopen(filePath.c_str(),"r");
                     string msg;
                     Trame* checkFileRetTrame;
                     if(file == NULL) {
-                        cout << "the file doesn't exist" << endl;
                         msg = "N";
                         checkFileRetTrame = new Trame(name_,CMD,msg.size(),1,1,msg);
                     }
                     else {
                         pclose(file);
-                        cout << "the file exists" << endl;
                         msg = "O";
                         checkFileRetTrame = new Trame(name_,CMD,msg.size(),1,1,msg);
                     }
-                    socketManager_.sendTrame(checkFileRetTrame);
+                    try {
+                        socketManager_.sendTrame(checkFileRetTrame);
+                    }catch(runtime_error& e) {
+                        return;
+                    }
                 }
                 else if(currentCMD[0] == "get_file") {
                     if(currentCMD.size() < 2) {
-                        cout << "[ClientReceiveHandler::launchReception] get_file command : invalid arg number." << endl;
                         continue;
                     }
-                    cout << "[ClientReceiveHandler::launchReception] want to get the file " << currentPath << currentCMD[1] << endl;
                     string filePath = currentPath;
                     filePath += currentCMD[1];
                     FILE* file = fopen(filePath.c_str(),"r");
@@ -163,7 +163,11 @@ void ClientReceiveHandler::launchReception() {
                         string errorMessage = "Cannot open the file ";
                         errorMessage += currentCMD[1];
                         Trame* errorTrame = new Trame(name_,ERROR,errorMessage.size(),1,1,errorMessage);
-                        socketManager_.sendTrame(errorTrame);
+                        try {
+                            socketManager_.sendTrame(errorTrame);
+                        }catch(runtime_error& e) {
+                            return;
+                        }
                     }
                     else {
                         int pos = fseek(file,0,SEEK_END);
@@ -179,7 +183,11 @@ void ClientReceiveHandler::launchReception() {
                             string bufString;
                             bufString.assign(fileBuffer,read);
                             Trame* ficTrame = new Trame(name_,ENV_FIC,read,1,nbTrames,bufString);
-                            socketManager_.sendTrame(ficTrame);
+                            try {
+                                socketManager_.sendTrame(ficTrame);
+                            }catch(runtime_error& e) {
+                                return;
+                            }
                             delete ficTrame;
                         }
                         pclose(file);
@@ -187,23 +195,29 @@ void ClientReceiveHandler::launchReception() {
                 }
                 else if(currentCMD[0] == "put_file") {
                     if(currentCMD.size() < 2) {
-                        cout << "put file pb nb arg" << endl;
                         continue;
                     }
                     string filePath = currentPath;
                     filePath += currentCMD[1];
-                    cout << "put_file path : " << filePath << endl;
                     FILE* file = fopen(filePath.c_str(),"w");
                     if(file == NULL) {
                         // handle error
                     }
                     else {
                         Trame* ackTrame = new Trame(name_,ACK);
-                        socketManager_.sendTrame(ackTrame);
+                        try {
+                            socketManager_.sendTrame(ackTrame);
+                        }catch(runtime_error& e) {
+                            return;
+                        }
                         delete ackTrame;
-                        Trame* response = socketManager_.receiveTrame();
+                        Trame* response;
+                        try {
+                            response = socketManager_.receiveTrame();
+                        }catch(runtime_error& e) {
+                            return;
+                        }
                         if(response->getType() == ERROR) {
-                            cout << "error, aborting" << endl;
                         }
                         else {
                             int fileSize = 0;
@@ -224,7 +238,11 @@ void ClientReceiveHandler::launchReception() {
                                     exitWaitingLoop = true;
                                 }
                                 while(!exitWaitingLoop) {
-                                    currentTrame = socketManager_.receiveTrame();
+                                    try {
+                                        currentTrame = socketManager_.receiveTrame();
+                                    }catch(runtime_error& e) {
+                                        return;
+                                    }
                                     localFile.write(currentTrame->getSerializableTrame()->data,currentTrame->getSize());
                                     fileSize += currentTrame->getSize();
                                     nbReceivedTrames++;

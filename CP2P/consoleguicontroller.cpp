@@ -24,18 +24,37 @@ bool ConsoleGUIController::connectServer() {
     msg += ':';
     msg += userIP_;
     Trame* connexionTrame = new Trame(username_,CON_SERV,msg.size(),1,1,msg);
-    serverSocketManager_.sendTrame(connexionTrame);
+    try {
+        serverSocketManager_.sendTrame(connexionTrame);
+    }catch(runtime_error& e) {
+        throw runtime_error(e.what());
+    }
     // Receive the server response
-    Trame* ackTrame = serverSocketManager_.receiveTrame();
-    if(ackTrame->getType() == ACK_CON) {
-        return true;
+    try {
+        Trame* ackTrame = serverSocketManager_.receiveTrame();
+        if(ackTrame->getType() == ACK_CON) {
+            return true;
+        }
+    }catch(runtime_error& e) {
+        return false;
     }
 }
 
 void ConsoleGUIController::handleAddFriend(string friendName) {
     Trame* demAmiTrame = new Trame(username_,DEM_AMI,friendName.size(),1,1,friendName);
-    serverSocketManager_.sendTrame(demAmiTrame);
-    Trame* serverResponse = serverSocketManager_.receiveTrame();
+    try {
+        serverSocketManager_.sendTrame(demAmiTrame);
+    }catch(runtime_error& e) {
+        cout << "The server is not reachable" << endl;
+        return;
+    }
+    Trame* serverResponse;
+    try {
+        serverResponse = serverSocketManager_.receiveTrame();
+    }catch(runtime_error& e) {
+        cout << "The server is not reachable" << endl;
+        return;
+    }
     if(serverResponse->getType() == ERROR) {
         throw runtime_error(serverResponse->getData());
     }
@@ -43,8 +62,8 @@ void ConsoleGUIController::handleAddFriend(string friendName) {
         string name;
         string ip;
         serverResponse->extractNameIP(name,ip);
-        cout << "[ConsoleGUIController::handleAddFriend] recevied ACK for DEM_AMI. " << name << " has the adress " << ip << endl;
         mapFriend_.insert(pair<string,string>(name,ip));
+        cout << "username " << name << " succesfully added as a friend." << endl;
     }
 }
 
@@ -55,21 +74,33 @@ void ConsoleGUIController::handleCommandMode(string friendName) {
     }
     socketManager_.connectTo(it->first,it->second);
     Trame* trame = new Trame(username_,CMD_CON);
-    socketManager_.sendTrame(trame);
-    Trame* distantHomePath = socketManager_.receiveTrame();
+    Trame* distantHomePath;
+    try {
+        socketManager_.sendTrame(trame);
+        distantHomePath = socketManager_.receiveTrame();
+    }catch(runtime_error& e) {
+        cout << friendName << " is not reachable, aborting." << endl;
+        return;
+    }
+
     if(distantHomePath->getType() == ERROR) {
         throw runtime_error(distantHomePath->getData());
     }
     currentPath_ = distantHomePath->getData();
-    cout << "[ConsoleGUIController::handleCommandMode] current path on distant client : " << currentPath_ << endl;
 }
 
 string ConsoleGUIController::handleCdCommand(string folder) {
     string cdCommand = "cd ";
     cdCommand += folder;
     Trame* cmdTrame = new Trame(username_,CMD,cdCommand.size(),1,1,cdCommand);
-    socketManager_.sendTrame(cmdTrame);
-    Trame* response = socketManager_.receiveTrame();
+    Trame* response;
+    try {
+        socketManager_.sendTrame(cmdTrame);
+        response = socketManager_.receiveTrame();
+    }catch(runtime_error& e) {
+        cout << "The client is not reachable, aborting." << endl;
+        return;
+    }
     if(response->getType() == ERROR) {
         throw runtime_error(response->getData());
     }
@@ -83,8 +114,15 @@ string ConsoleGUIController::handleCdCommand(string folder) {
 string ConsoleGUIController::handleLsCommand() {
     string lsCommand = "ls ";
     Trame* cmdTrame = new Trame(username_,CMD,lsCommand.size(),1,1,lsCommand);
-    socketManager_.sendTrame(cmdTrame);
-    Trame* response = socketManager_.receiveTrame();
+    Trame* response;
+    try {
+        socketManager_.sendTrame(cmdTrame);
+        response = socketManager_.receiveTrame();
+    }catch(runtime_error& e) {
+        cout << "The client is not reachable, aborting." << endl;
+        return;
+    }
+
     if(response->getType() == ERROR) {
         throw runtime_error(response->getData());
     }
@@ -98,7 +136,6 @@ void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
     char buffer[128];
     FILE* home = popen("echo $HOME","r");
     if(home == NULL) {
-        cout << "[ClientReceiveHandler::launchReception] error during the getHome command." << endl;
         return;
     }
     while(!feof(home)) {
@@ -113,8 +150,15 @@ void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
     string checkFileCommand = "check_file ";
     checkFileCommand += distantFilePath;
     Trame* checkFicTrame = new Trame(username_,CMD,checkFileCommand.size(),1,1,checkFileCommand);
-    socketManager_.sendTrame(checkFicTrame);
-    Trame* respCheck = socketManager_.receiveTrame();
+    Trame* respCheck;
+    try {
+        socketManager_.sendTrame(checkFicTrame);
+        respCheck = socketManager_.receiveTrame();
+    }catch(runtime_error& e) {
+        cout << "The client is not reachable, aborting." << endl;
+        return;
+    }
+
     if(respCheck->getData().at(0) == 'N') {
         cout << "\tThe file is not available on remote client." << endl;
         cout << "\tPlease try again." << endl;
@@ -180,7 +224,6 @@ void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
                 char buffer[128];
                 string lsReturn;
                 if(lsCmd == NULL) {
-                    cout << "[ClientReceiveHandler::launchReception] error during the ls command." << endl;
                     return;
                 }
                 while(!feof(lsCmd)) {
@@ -198,7 +241,6 @@ void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
                 char buffer[128];
                 string mkdirReturn;
                 if(mkdirCmd == NULL) {
-                    cout << "[ClientReceiveHandler::launchReception] error during the mkdir command." << endl;
                     return;
                 }
                 while(!feof(mkdirCmd)) {
@@ -207,7 +249,6 @@ void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
                 }
                 pclose(mkdirCmd);
                 if(mkdirReturn.empty()) {
-                    cout << "[ClientReceiveHandler::launchReception] mkdir succesfull" << endl;
                 }
             }
         }
@@ -217,9 +258,15 @@ void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
     getFileCommand += distantFilePath;
 
     Trame* demFicTrame = new Trame(username_,CMD,getFileCommand.size(),1,1,getFileCommand);
-    socketManager_.sendTrame(demFicTrame);
-    //cout << "[ConsoleGUIController::handleGetFileCommand] send a DEM_FIC trame" << endl;
-    Trame* response = socketManager_.receiveTrame();
+    Trame* response;
+    try {
+        socketManager_.sendTrame(demFicTrame);
+        response = socketManager_.receiveTrame();
+    }catch(runtime_error& e) {
+        cout << "The client is not reachable, aborting." << endl;
+        return;
+    }
+
     if(response->getType() == ERROR) {
         throw runtime_error(response->getData());
     }
@@ -241,7 +288,12 @@ void ConsoleGUIController::handleGetFileCommand(string distantFilePath) {
             exitWaitingLoop = true;
         }
         while(!exitWaitingLoop) {
-            currentTrame = socketManager_.receiveTrame();
+            try {
+                currentTrame = socketManager_.receiveTrame();
+            }catch(runtime_error& e) {
+                cout << "An connexion error occured, aborting" << endl;
+                return;
+            }
             localFile.write(currentTrame->getSerializableTrame()->data,currentTrame->getSize());
             fileSize += currentTrame->getSize();
             nbReceivedTrames++;
@@ -274,7 +326,6 @@ void ConsoleGUIController::handlePutFileCommand() {
     char buffer[128];
     FILE* home = popen("echo $HOME","r");
     if(home == NULL) {
-        cout << "[ClientReceiveHandler::launchReception] error during the getHome command." << endl;
         return;
     }
     while(!feof(home)) {
@@ -309,7 +360,7 @@ void ConsoleGUIController::handlePutFileCommand() {
             pathSelected = true;
             downloadsFolderPath += currentCommand[1];
             fileName = currentCommand[1];
-            cout << "Download directory : " << downloadsFolderPath << endl;
+            cout << "Local file directory : " << downloadsFolderPath << endl;
             continue;
         }
         if(currentCommand[0] == "cd") {
@@ -347,7 +398,6 @@ void ConsoleGUIController::handlePutFileCommand() {
             char buffer[128];
             string lsReturn;
             if(lsCmd == NULL) {
-                cout << "[ClientReceiveHandler::launchReception] error during the ls command." << endl;
                 return;
             }
             while(!feof(lsCmd)) {
@@ -363,20 +413,36 @@ void ConsoleGUIController::handlePutFileCommand() {
     putFileCommand += fileName;
 
     Trame* envFicTrame = new Trame(username_,CMD,putFileCommand.size(),1,1,putFileCommand);
-    socketManager_.sendTrame(envFicTrame);
-    Trame* response = socketManager_.receiveTrame();
+    try {
+        socketManager_.sendTrame(envFicTrame);
+    }catch(runtime_error& e) {
+        cout << "An error occured, aborting." << endl;
+        return;
+    }
+    Trame* response;
+    try {
+        response = socketManager_.receiveTrame();
+    }catch(runtime_error& e) {
+        cout << "An error occured, aborting." << endl;
+        return;
+    }
+
     if(response->getType() == ERROR) {
         throw runtime_error(response->getData());
     }
     string filePath = downloadsFolderPath;
-    cout << "file to upload : " << filePath << endl;
     FILE* file = fopen(filePath.c_str(),"r");
     if(file == NULL) {
         string errorMessage = "Cannot open the file ";
         errorMessage += downloadsFolderPath;
         cout << errorMessage << endl;
         Trame* errorTrame = new Trame(username_,ERROR,errorMessage.size(),1,1,errorMessage);
-        socketManager_.sendTrame(errorTrame);
+        try {
+            socketManager_.sendTrame(errorTrame);
+        }catch(runtime_error& e) {
+            cout << "An error occured, aborting." << endl;
+            return;
+        }
     }
     else {
         int pos = fseek(file,0,SEEK_END);
@@ -392,7 +458,12 @@ void ConsoleGUIController::handlePutFileCommand() {
             string bufString;
             bufString.assign(fileBuffer,read);
             Trame* ficTrame = new Trame(username_,ENV_FIC,read,1,nbTrames,bufString);
+            try {
             socketManager_.sendTrame(ficTrame);
+            }catch(runtime_error& e) {
+                cout << "An error occured, aborting." << endl;
+                return;
+            }
             sended++;
             if(sended == 1) {
                 cout << "Uploading " << fileName << endl;
