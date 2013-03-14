@@ -1,26 +1,32 @@
-client: client.o map.o trame.o trame_utils.o common.o
-	g++ -o client client.o map.o trame.o trame_utils.o common.o -pthread
+server: server.o trame.o socketmanager.o receivehandler.o serverreceivehandler.o
+	g++ -o server server.o trame.o socketmanager.o receivehandler.o serverreceivehandler.o -pthread
 	
-server: server.o map.o trame.o common.o trame_utils.o
-	g++ -o server server.o map.o trame.o common.o trame_utils.o -pthread
+client: client.o trame.o socketmanager.o receivehandler.o consolegui.o consoleguicontroller.o clientreceivehandler.o
+	g++ -o client client.o trame.o socketmanager.o receivehandler.o consolegui.o consoleguicontroller.o clientreceivehandler.o -pthread
 
-server.o: server.c
-	g++ -c -Lpthread server.c
+server.o: server.cpp serverreceivehandler.h socketmanager.h trame.h common.h
+	g++ -c -Lpthread server.cpp
 
-client.o: client.c
-	g++ -c -Lpthread client.c
+trame.o: trame.cpp trame.h common.h
+	g++ -c trame.cpp
+
+socketmanager.o: socketmanager.cpp socketmanager.h common.h trame.h
+	g++ -c socketmanager.cpp
+
+receivehandler.o: receivehandler.cpp receivehandler.h socketmanager.h common.h trame.h
+	g++ -c receivehandler.cpp
 	
-map.o: map.c map.h
-	g++ -c -std=c99 map.c
+serverreceivehandler.o: serverreceivehandler.cpp serverreceivehandler.h receivehandler.h
+	g++ -c serverreceivehandler.cpp
+
+consolegui.o: consolegui.cpp consolegui.h consoleguicontroller.h
+	g++ -c consolegui.cpp
 	
-trame.o: trame.c trame.h
-	g++ -c -std=c99 trame.c
+consoleguicontroller.o: consoleguicontroller.cpp consoleguicontroller.h socketmanager.h trame.h
+	g++ -c consoleguicontroller.cpp
 
-common.o: common.c common.h
-	g++ -c -std=c99 common.c
-
-trame_utils.o: trame_utils.c trame_utils.h
-	g++ -c trame_utils.c
+clientreceivehandler.o: clientreceivehandler.cpp clientreceivehandler.h receivehandler.h
+	g++ -c clientreceivehandler.cpp
 
 clean:
 	rm -rf *.o client server

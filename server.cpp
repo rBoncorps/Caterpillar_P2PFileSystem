@@ -26,6 +26,10 @@ void* receptionTrame(void* sock) {
 }
 
 int main() {
+string str("pouet");
+std::cout << "max_size: " << str.max_size() << "\n";
+	cout << "CP2P server is running" << endl;
+	cout << "segmentation fault (such a joke !)" << endl;
     pthread_t nouveau_client;
 
     int socket_descriptor,

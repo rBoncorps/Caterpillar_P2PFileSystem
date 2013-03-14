@@ -5,6 +5,7 @@
 #include <sstream>
 #include <vector>
 #include "stdlib.h"
+#include "unistd.h"
 
 /*! \brief Creates a new SocketManager instance with the given
     socketDescriptor.
@@ -97,6 +98,7 @@ void SocketManager::startListening(string name) {
     \exception A runtime_error is thrown if an error occured during the send process.
 */
 void SocketManager::sendTrame(Trame *trame) {
+	usleep(50);
     SerializableTrame* serializable = trame->getSerializableTrame();
     if(write(socketDescriptor_,(char*)serializable,MAX_TRAME_SIZE) < 0) {
         throw runtime_error("Cannot send the trame in the socket.");
@@ -110,17 +112,19 @@ void SocketManager::sendTrame(Trame *trame) {
     \exception A runtime_error is thrown if an error occured during the socket reading.
 */
 Trame* SocketManager::receiveTrame() const {
-    char buffer[MAX_TRAME_SIZE];
+    char* buffer = (char*)malloc(sizeof(char)*MAX_TRAME_SIZE);
     int bufferSize = read(socketDescriptor_, buffer, MAX_TRAME_SIZE);
     if(bufferSize <= 0) {
         throw runtime_error("An error occured when during the read of the socket");
         return NULL;
     }
-    SerializableTrame* serializable = (SerializableTrame*)&buffer;
-
+    SerializableTrame* serializable = (SerializableTrame*)buffer;
     string test;
+    usleep(75);
     test.assign(serializable->data,serializable->taille);
+    
     Trame* trame = new Trame(serializable->nameSrc,serializable->typeTrame,serializable->taille,serializable->numTrame,serializable->nbTrames,test);
+    delete buffer;
     return trame;
 }
 

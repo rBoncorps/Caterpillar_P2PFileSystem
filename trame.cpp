@@ -2,6 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string.h>
+#include <stdlib.h>
 
 Trame::Trame(string fromName, TrameType type, int size, int numTrame, int nbTrame, string data) {
     fromName_ = fromName;
@@ -10,7 +11,7 @@ Trame::Trame(string fromName, TrameType type, int size, int numTrame, int nbTram
     numTrame_ = numTrame;
     nbTrame_ = nbTrame;
     data_ = data;
-    serializableTrame = new SerializableTrame;
+    serializableTrame = (SerializableTrame*)malloc(sizeof(SerializableTrame));
     for(int i = 0; i < size; i++) {
         serializableTrame->data[i] = data.data()[i];
     }
