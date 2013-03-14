@@ -29,6 +29,7 @@ void ClientReceiveHandler::launchReception() {
         Trame* ackTrame = new Trame(name_,ACK_CON);
         try {
             socketManager_.sendTrame(ackTrame);
+            delete ackTrame;
         }catch(runtime_error& e) {
             return;
         }
@@ -49,6 +50,7 @@ void ClientReceiveHandler::launchReception() {
         Trame* homePathTrame = new Trame(name_,CMD_HOME,currentPath.size(),1,1,currentPath);
         try {
             socketManager_.sendTrame(homePathTrame);
+            delete homePathTrame;
         }catch(runtime_error& e) {
             return;
         }
@@ -103,6 +105,7 @@ void ClientReceiveHandler::launchReception() {
                     }
                     try {
                         socketManager_.sendTrame(cdTrame);
+                        delete cdTrame;
                     }catch(runtime_error& e) {
                         return;
                     }
@@ -124,6 +127,7 @@ void ClientReceiveHandler::launchReception() {
                     Trame* lsTrame = new Trame(name_,LS_RET,lsReturn.size(),1,1,lsReturn);
                     try {
                         socketManager_.sendTrame(lsTrame);
+                        delete lsTrame;
                     }catch(runtime_error& e) {
                         return;
                     }
@@ -148,6 +152,7 @@ void ClientReceiveHandler::launchReception() {
                     }
                     try {
                         socketManager_.sendTrame(checkFileRetTrame);
+                        delete checkFileRetTrame;
                     }catch(runtime_error& e) {
                         return;
                     }
@@ -165,6 +170,7 @@ void ClientReceiveHandler::launchReception() {
                         Trame* errorTrame = new Trame(name_,ERROR,errorMessage.size(),1,1,errorMessage);
                         try {
                             socketManager_.sendTrame(errorTrame);
+                            delete errorTrame;
                         }catch(runtime_error& e) {
                             return;
                         }
@@ -185,10 +191,10 @@ void ClientReceiveHandler::launchReception() {
                             Trame* ficTrame = new Trame(name_,ENV_FIC,read,1,nbTrames,bufString);
                             try {
                                 socketManager_.sendTrame(ficTrame);
+                                delete ficTrame;
                             }catch(runtime_error& e) {
                                 return;
                             }
-                            delete ficTrame;
                         }
                         pclose(file);
                     }
@@ -207,10 +213,10 @@ void ClientReceiveHandler::launchReception() {
                         Trame* ackTrame = new Trame(name_,ACK);
                         try {
                             socketManager_.sendTrame(ackTrame);
+                            delete ackTrame;
                         }catch(runtime_error& e) {
                             return;
                         }
-                        delete ackTrame;
                         Trame* response;
                         try {
                             response = socketManager_.receiveTrame();
@@ -237,6 +243,7 @@ void ClientReceiveHandler::launchReception() {
                                 if(response->getNbTrame() == 1) {
                                     exitWaitingLoop = true;
                                 }
+                                delete currentTrame;
                                 while(!exitWaitingLoop) {
                                     try {
                                         currentTrame = socketManager_.receiveTrame();
@@ -271,6 +278,7 @@ void ClientReceiveHandler::launchReception() {
                     }
                 }
             }
+            delete receivedCMDTrame;
         }
     }
 }

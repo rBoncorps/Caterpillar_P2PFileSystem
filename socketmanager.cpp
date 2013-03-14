@@ -112,19 +112,32 @@ void SocketManager::sendTrame(Trame *trame) {
     \exception A runtime_error is thrown if an error occured during the socket reading.
 */
 Trame* SocketManager::receiveTrame() const {
-    char* buffer = (char*)malloc(sizeof(char)*MAX_TRAME_SIZE);
-    int bufferSize = read(socketDescriptor_, buffer, MAX_TRAME_SIZE);
+    bool ok = false;
+    Trame* trame;
+    while(!ok) {
+    char* buffert = (char*)malloc(sizeof(char)*MAX_TRAME_SIZE);
+    int bufferSize = read(socketDescriptor_, buffert, MAX_TRAME_SIZE);
     if(bufferSize <= 0) {
         throw runtime_error("An error occured when during the read of the socket");
         return NULL;
     }
-    SerializableTrame* serializable = (SerializableTrame*)buffer;
+    SerializableTrame* serializablet = (SerializableTrame*)buffert;
+    cout << "==========" << endl;
+    cout << "bufferSize : " << bufferSize << endl;
+    cout << serializablet->nameSrc << endl;
+    cout << serializablet->taille << endl;
+    cout << serializablet->data << endl;
     string test;
-    usleep(75);
-    test.assign(serializable->data,serializable->taille);
+    test.assign(serializablet->data,serializablet->taille);
     
-    Trame* trame = new Trame(serializable->nameSrc,serializable->typeTrame,serializable->taille,serializable->numTrame,serializable->nbTrames,test);
-    delete buffer;
+    trame = new Trame(serializablet->nameSrc,serializablet->typeTrame,serializablet->taille,serializablet->numTrame,serializablet->nbTrames,test);
+    //delete buffer;
+    test.clear();
+    free(serializablet);
+    if(serializablet->taille >= 0 && serializablet->taille <= MAX_DATA_SIZE) {
+        ok = true;
+    }
+    }
     return trame;
 }
 
