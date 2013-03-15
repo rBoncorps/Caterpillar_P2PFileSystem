@@ -116,17 +116,17 @@ Trame* SocketManager::receiveTrame() const {
     Trame* trame;
     while(!ok) {
     char* buffert = (char*)malloc(sizeof(char)*MAX_TRAME_SIZE);
-    int bufferSize = read(socketDescriptor_, buffert, MAX_TRAME_SIZE);
+    int bufferSize = recv(socketDescriptor_, buffert, MAX_TRAME_SIZE,MSG_WAITALL);
     if(bufferSize <= 0) {
         throw runtime_error("An error occured when during the read of the socket");
         return NULL;
     }
     SerializableTrame* serializablet = (SerializableTrame*)buffert;
-    cout << "==========" << endl;
+    /*cout << "==========" << endl;
     cout << "bufferSize : " << bufferSize << endl;
     cout << serializablet->nameSrc << endl;
     cout << serializablet->taille << endl;
-    cout << serializablet->data << endl;
+    cout << serializablet->data << endl;*/
     string test;
     test.assign(serializablet->data,serializablet->taille);
     

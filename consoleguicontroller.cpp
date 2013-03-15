@@ -491,6 +491,7 @@ void ConsoleGUIController::handlePutFileCommand() {
             readed += read;
             string bufString;
             bufString.assign(fileBuffer,read);
+            //cout << "Trame length : " << read << endl;
             Trame* ficTrame = new Trame(username_,ENV_FIC,read,1,nbTrames,bufString);
             try {
                 socketManager_.sendTrame(ficTrame);
