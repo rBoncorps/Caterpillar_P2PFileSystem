@@ -7,6 +7,7 @@
 \usepackage{wrapfig}
 \usepackage{multicol}
 
+
 \author{Boncorps Robin \& Daniel Gwendal}
 \title{Rapport de projet - FTP pair à pair}
 
@@ -14,22 +15,55 @@
 \maketitle
 
 \chapter{Introduction} % lol
-Dans le cadre de nos TP de réseaux, nous avons du développer une application client/serveur. Le but de ce projet est de comprendre les principes de fonctionnement des sockets, bases de toutes applications réseaux réparties. C'est dans cette optique que nous avons choisi de développer une application d'échange de fichiers en pair à pair. Nous allons donc, dans le présent rapport, présenter les différents protocoles et moyens utilisés pour mener à bien ce projet. Nous nous intereserons, par la suite, à la modélisation de l'application pour finir par présenter les différentes performances de l'application.
+Dans le cadre de nos TP de réseaux, nous avons du développer une application client/serveur. Le but de ce projet est de comprendre les principes de fonctionnement des sockets, bases de toutes applications réseaux réparties. C'est dans cette optique que nous avons choisi de développer une application d'échange de fichiers en pair à pair. Nous allons donc, dans le présent rapport, présenter les différents protocoles et moyens utilisés pour mener à bien ce projet. Nous nous interesserons, par la suite, à la modélisation de l'application pour finir par présenter les différentes performances de l'application.
 
 \chapter{Analyse}
 Dans cette partie, nous allons présenter succintement les différentes bases sur lesquelles s'appuie l'application.
 
 	\section{FTP : File Transfer Protocol} %robin
 	FTP ou File Transfert Protocol est un protocol de communication destiné à l'échange de fichiers sur un réseau TCP/IP.
-	FTP obéit à un modéle client-serveur, un client interrogant un serveur distant qui fonctionne sur la machine distante.
+	FTP obéit à un modéle client-serveur, un client interrogant un serveur distant qui fonctionne sur la machine distante. (plus d'informations \url{http://fr.wikipedia.org/wiki/File_Transfer_Protocol})
+		
+	\section{Pair-à-pair} % gwendal
+	Le pair-à-pair est un modèle de réseau informatique dans lequel tout client peut également être un serveur. On distingue deux types de réseaux pair-à-pair : les réseaux centralisés (les connexions se font par le biais d'un serveur) et décentralisés (les connexions se font directement entre clients). Ce type d'architecture est relativement connue du grand publique par le partage de fichiers, mais peut également servir au calcul scientifique ou à la communication. (plus d'informations \url{http://fr.wikipedia.org/wiki/Pair_%C3%A0_pair})
 	
-	
-	
-	\section{Pair à pair} % gwendal
 	\section{Application} % gwendal
+	Une fois ces données en tête, nous avons trouvé que créer une application type FTP mais en réseau pair-à-pair était un défi intéressant. Afin de pouvoir tenir les délais du projet, nous avons décidé de mettre en place une architecture pair-à-pair centralisée, ce qui nous évitait de créer un protocole complexe de connaissance de voisins. Nous avons également estimé que pour une première version il était suffisant de ne permettre l'échange de fichier qu'entre deux stations (à l'inverse des protocoles utilisés par les trackers de torrents, qui récupèrent un même fichier de plusieurs endroits).
+	\newline
+
+	Notre application devait également permettre de gérer plusieurs connexions simultanées sur un même client (plusieurs demandes de fichiers, identiques ou non). Il était également évident qu'il fallait proposer les fonctionnalités de navigation propres à FTP (\emph{ls}, \emph{cd}, \emph{pwd}) afin de permettre la navigation et la récupération de fichiers.
 
 \chapter{Modélisation}
 	\section{Architecture} %gwendal
+	Cette section détaillera plus précisement l'architecture retenue au niveau réseau. Comme nous l'avons dit précédement, nous avons choisi de développer une application pair-à-pair d'échange de fichier. Le schéma ci-dessous montre un cas d'utilisation basique de l'application.
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[scale=0.4]{archi.jpg}
+		\label{Architecture générale}
+	\end{figure}
+	\newpage
+
+	Dans cet exemple, on voit que les trois clients doivent dans un premier temps s'enregistrer auprès du serveur. Cette phase est nécessaire pour que le serveur puisse ensuite effectuer les résolutions d'adresses en fonctions des identifiants demandés. En effet, pour plus de sécurité et pour un meilleur confort d'utilisation, nous avons décidé que les clients ne devaient pas connaître les adresses ip de leurs contacts.
+	\newline
+
+	Dans notre exemple, les clients a et b demandent ensuite l'adresse ip du client c. Au niveau application, cette action est réalisée par une commande \emph{add\_friend<username>}. Le serveur résoud alors les adresses et renvoie l'adresse ip au client.
+	\newline
+
+	Enfin, les clients a et b se connectent au client c et commencent respectivement une récupération de fichier et un envoi (par les commandes \emph{get\_file<file name>} et \emph{put\_file<file name>}). On peut noter que le client c ouvre un thread par connexion, ce qui lui permet de traiter les deux demandes en parallèle.
+	\newline
+	Le serveur n'interragi plus dans les communications. Il ne sert qu'à résoudre des adresses.
+
+	\textbf{Modélisation interne :} Nous n'avons pas voulu nous attarder sur la modélisation interne de l'application (diagramme de classes, explication détaillée \ldots) d'une part car le modèle retenu est très simple, et d'autre part car cet aspect ne nous semblait pas primordiale dans ce rapport. Voici néanmoins quelques points intéressants de la modélisation que nous avons retenu :
+		~\\
+		\begin{itemize}
+			\item Une classe dédiée qui gère les envois et réceptions niveau socket (classe \emph{SocketManager})
+			\item Une classe maintenant une réprésentation au niveau application d'une trame (aisée à manipuler) ainsi qu'un format particulier permettant un transfert facile (class \emph{Trame}).
+			\item Enfin un ensemble de classes et de fonctions permettant de traiter la réception des messages (classe \emph{*handler})
+		\end{itemize}
+		~\\
+
+		Cette modélisation orientée objet nous a permis d'accélérer le développement de l'application et de nous répartir intelligement les tâches.
+
 	\section{PXP : Personal eXchange Protocol} %robin
 		L'application permet d'échanger des fichiers grâce à son propre protocole (de la meme famille que ftp). 
 		Ce protocole, que nous nommerons par la suite PXP pour Personal eXchange Protocol, permet le découpage/reconstruction d'un fichier entre 2 machines distante.
@@ -40,7 +74,7 @@ Dans cette partie, nous allons présenter succintement les différentes bases su
 				\includegraphics[scale=0.5]{TramePXP.png}
 				\label{Trame PXP}
 			\end{figure}
-			% mettre TramePXP.png
+		
 			Signification des champs :
 			\begin{itemize}
 				\item Type Trame : Le type de trame envoyé (nous détaillerons par la suite les différents types)
@@ -88,12 +122,37 @@ Dans cette partie, nous allons présenter succintement les différentes bases su
 			
 \chapter{Résultats}
 	\section{Vitesses de transfert}  %gwendal
+	Nous n'avons pas eu le temps de récupérer un ensemble de données précises sur l'utilisation de l'application. Néanmoins nous pouvons donner des ordres de grandeurs sur les vitesses de transfert : 
+		~\\
+		\begin{itemize}
+			\item Fichier de petite taille (< 1mo) : entre 0 et 2 secondes.
+			\item Fichier de taille moyenne ( 100mo - 500 mo) : entre 10 et 20 secondes.
+			\item Fichier de taille imposante (1go) : entre 30 secondes et 1 minute.
+		\end{itemize}
+		~\\
+
+	Les tests ont été réalisés pour le premier cas sur différents fichier pdf que nous avions à disposition (rapports de projets précédents, articles \ldots), le test du fichier de taille moyenne a été réalisé pendant la démonstration de travaux pratique avec une fichier pdf d'environ 140 mo, enfin le test de fichier imposant à été réalisé avec une image iso ubuntu.
+	\newline
+
+	Nous sommes relativement content de la vitesse obtenue. Il ne faut néanmoins pas oublier que ces résultats sont dépendant de la charge et de la performance du réseau, qui n'ont pas beaucoup influé sur les tests (réseau de deux machines ou réseau local en salle de travaux pratiques).
+	\newline
+
+	Une des expications de cette vitesse est l'absence de contrôle d'erreur type CRC, nous n'en avons en effet pas eu besoin puisque le protocole TCP utilisé au travers des sockets assure l'intégrité des données.
+
+	De la même façon nous n'avons pas eu à réordonner les trames arrivant, puisque nous avons opté pour des sockets en mode connecté, qui nous garantissait l'ordre d'arrivée des trames.
+
 	\section{Format de trames} %robin
 	Nous avons opté pour une taille de trame de 1132 octets (entête comprise) pour ne pas dépasser la taille maximale des données d'une segment de TCP qui est 1500 octets. Ceci permet de ne pas avoir a redécouper les données envoyées, ce qui ralentirait la vitesse de transfert.
 	
 
 \chapter{Conclusion}
 	\section{Apports} %gwendal
+	Ce projet de travaux pratiques nous a permis de nous familiariser avec la programmation d'une application réseau, qui plus est distribuée. Nous avons pu apprendre à manipuler les sockets et conforter notre utilisation des threads.
+	\newline
+
+	D'un point de vue personnel, nous avons aimé travailler sur un système pair-à-pair, qui est une approche bien particulière du développement d'application. Nous regrettons simplement de ne pas avoir eu plus de temps à y consacrer afin d'effectuer de meilleurs tests ou encore d'offrir une interface ergonomique et intuitive pour l'utilisateur.
+
+
 	\section{Difficultés rencontrées} %robin
 	Nous avons principalement rencontré des difficultés lors du découpage des fichiers ainsi qu'au niveau de la procedure de reception de trame. 
 	La première difficulté était de savoir comment découper un fichier et de le reconstruire après.
